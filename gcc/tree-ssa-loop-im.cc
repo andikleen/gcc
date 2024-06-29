@@ -50,6 +50,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dbgcnt.h"
 #include "insn-codes.h"
 #include "optabs-tree.h"
+#include "inchash.h"
 
 /* TODO:  Support for predicated code motion.  I.e.
 
@@ -1581,7 +1582,7 @@ static void
 gather_mem_refs_stmt (class loop *loop, gimple *stmt)
 {
   tree *mem = NULL;
-  hashval_t hash;
+  inchash::hash hstate;
   im_mem_ref **slot;
   im_mem_ref *ref;
   bool is_stored;
@@ -1654,22 +1655,23 @@ gather_mem_refs_stmt (class loop *loop, gimple *stmt)
 	      && (mem_ref_offset (base) * BITS_PER_UNIT + offset).to_shwi (&moffset)
 	      && moffset.is_constant (&mcoffset))
 	    {
-	      hash = iterative_hash_expr (TREE_OPERAND (base, 0), 0);
-	      hash = iterative_hash_host_wide_int (mcoffset, hash);
+	      inchash::add_expr (TREE_OPERAND (base, 0), hstate);
+	      hstate.add_int (mcoffset);
 	    }
 	  else
 	    {
-	      hash = iterative_hash_expr (base, 0);
-	      hash = iterative_hash_host_wide_int (offset, hash);
+	      inchash::add_expr (base, hstate);
+	      hstate.add_int (offset);
 	    }
-	  hash = iterative_hash_host_wide_int (size, hash);
+	  hstate.add_int (size);
 	}
       else
 	{
 	  ref_decomposed = false;
-	  hash = iterative_hash_expr (aor.ref, 0);
+	  inchash::add_expr (aor.ref, hstate);
 	  aor.max_size = -1;
 	}
+      hashval_t hash = hstate.end();
       slot = memory_accesses.refs->find_slot_with_hash (&aor, hash, INSERT);
       aor.max_size = saved_maxsize;
       if (*slot)

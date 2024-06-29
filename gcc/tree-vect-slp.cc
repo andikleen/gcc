@@ -6644,10 +6644,10 @@ vect_scalar_ops_slice::all_same_p () const
 hashval_t
 vect_scalar_ops_slice_hash::hash (const value_type &s)
 {
-  hashval_t hash = 0;
+  inchash::hash hstate;
   for (unsigned i = 0; i < s.length; ++i)
-    hash = iterative_hash_expr (s.op (i), hash);
-  return hash;
+    inchash::add_expr(s.op (i), hstate);
+  return hstate.end ();
 }
 
 bool

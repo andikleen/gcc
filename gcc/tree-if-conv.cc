@@ -124,6 +124,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-vectorizer.h"
 #include "tree-eh.h"
 #include "cgraph.h"
+#include "inchash.h"
 
 /* For lang_hooks.types.type_for_mode.  */
 #include "langhooks.h"
@@ -169,12 +170,13 @@ struct innermost_loop_behavior_hash : nofree_ptr_hash <innermost_loop_behavior>
 inline hashval_t
 innermost_loop_behavior_hash::hash (const value_type &e)
 {
-  hashval_t hash;
+  inchash::hash hstate;
 
-  hash = iterative_hash_expr (e->base_address, 0);
-  hash = iterative_hash_expr (e->offset, hash);
-  hash = iterative_hash_expr (e->init, hash);
-  return iterative_hash_expr (e->step, hash);
+  inchash::add_expr (e->base_address, hstate);
+  inchash::add_expr (e->offset, hstate);
+  inchash::add_expr (e->init, hstate);
+  inchash::add_expr (e->step, hstate);
+  return hstate.end ();
 }
 
 inline bool

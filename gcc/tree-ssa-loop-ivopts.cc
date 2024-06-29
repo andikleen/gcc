@@ -132,6 +132,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-vectorizer.h"
 #include "dbgcnt.h"
 #include "cfganal.h"
+#include "inchash.h"
 
 /* For lang_hooks.types.type_for_mode.  */
 #include "langhooks.h"
@@ -3415,11 +3416,13 @@ record_common_cand (struct ivopts_data *data, tree base,
 {
   class iv_common_cand ent;
   class iv_common_cand **slot;
+  inchash::hash hstate;
 
   ent.base = base;
   ent.step = step;
-  ent.hash = iterative_hash_expr (base, 0);
-  ent.hash = iterative_hash_expr (step, ent.hash);
+  inchash::add_expr (base, hstate);
+  inchash::add_expr (step, hstate);
+  ent.hash = hstate.end ();
 
   slot = data->iv_common_cand_tab->find_slot (&ent, INSERT);
   if (*slot == NULL)
