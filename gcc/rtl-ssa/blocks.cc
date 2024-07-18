@@ -528,11 +528,11 @@ function_info::create_degenerate_phi (ebb_info *ebb, set_info *def)
       basic_block pred_cfg_bb = single_pred (ebb->first_bb ()->cfg_bb ());
       bb_info *pred_bb = this->bb (pred_cfg_bb);
 
-      if (!bitmap_set_bit (DF_LR_IN (ebb->first_bb ()->cfg_bb ()), regno))
+      if (!bitmap_set_bit_result (DF_LR_IN (ebb->first_bb ()->cfg_bb ()), regno))
 	{
 	  // The register was not previously live on entry to EBB and
 	  // might not have been live on exit from PRED_BB either.
-	  if (bitmap_set_bit (DF_LR_OUT (pred_cfg_bb), regno))
+	  if (bitmap_set_bit_result (DF_LR_OUT (pred_cfg_bb), regno))
 	    add_live_out_use (pred_bb, def);
 	}
       else

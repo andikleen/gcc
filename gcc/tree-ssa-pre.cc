@@ -851,7 +851,7 @@ pre_expr_DFS (pre_expr expr, bitmap_set_t set, bitmap val_visited,
 	    /* If we already found a leader for the value we've
 	       recursed already.  Avoid the costly bitmap_find_leader.  */
 	    if (bitmap_bit_p (&set->values, op_val_id)
-		&& bitmap_set_bit (val_visited, op_val_id))
+		&& bitmap_set_bit_result (val_visited, op_val_id))
 	      pre_expr_DFS (op_val_id, set, val_visited, post);
 	  }
 	break;
@@ -873,7 +873,7 @@ pre_expr_DFS (pre_expr expr, bitmap_set_t set, bitmap val_visited,
 		  continue;
 		unsigned op_val_id = VN_INFO (op[n])->value_id;
 		if (bitmap_bit_p (&set->values, op_val_id)
-		    && bitmap_set_bit (val_visited, op_val_id))
+		    && bitmap_set_bit_result (val_visited, op_val_id))
 		  pre_expr_DFS (op_val_id, set, val_visited, post);
 	      }
 	  }
@@ -899,7 +899,7 @@ sorted_array_from_bitmap_set (bitmap_set_t set)
   auto_bitmap val_visited (&grand_bitmap_obstack);
   bitmap_tree_view (val_visited);
   FOR_EACH_VALUE_ID_IN_SET (set, i, bi)
-    if (bitmap_set_bit (val_visited, i))
+    if (bitmap_set_bit_result (val_visited, i))
       pre_expr_DFS (i, set, val_visited, result);
 
   return result;
@@ -997,7 +997,7 @@ bitmap_value_replace_in_set (bitmap_set_t set, pre_expr expr)
       bitmap exprset = value_expressions[val];
       EXECUTE_IF_SET_IN_BITMAP (exprset, 0, i, bi)
 	{
-	  if (bitmap_clear_bit (&set->expressions, i))
+	  if (bitmap_clear_bit_result (&set->expressions, i))
 	    {
 	      bitmap_set_bit (&set->expressions, get_expression_id (expr));
 	      return i != get_expression_id (expr);
@@ -1025,7 +1025,7 @@ bitmap_value_insert_into_set (bitmap_set_t set, pre_expr expr)
     return;
 
   /* If the value membership changed, add the expression.  */
-  if (bitmap_set_bit (&set->values, val))
+  if (bitmap_set_bit_result (&set->values, val))
     bitmap_set_bit (&set->expressions, expr->id);
 }
 

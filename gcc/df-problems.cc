@@ -2930,16 +2930,16 @@ df_word_lr_mark_ref (df_ref ref, bool is_set, regset live)
   if (is_set)
     {
       if (which_subword != 1)
-	changed |= bitmap_set_bit (live, regno * 2);
+	changed |= bitmap_set_bit_result (live, regno * 2);
       if (which_subword != 0)
-	changed |= bitmap_set_bit (live, regno * 2 + 1);
+	changed |= bitmap_set_bit_result (live, regno * 2 + 1);
     }
   else
     {
       if (which_subword != 1)
-	changed |= bitmap_clear_bit (live, regno * 2);
+	changed |= bitmap_clear_bit_result (live, regno * 2);
       if (which_subword != 0)
-	changed |= bitmap_clear_bit (live, regno * 2 + 1);
+	changed |= bitmap_clear_bit_result (live, regno * 2 + 1);
     }
   return changed;
 }

@@ -373,7 +373,7 @@ function_info::possibly_queue_changes (insn_change &change)
     };
 
   if (needs_pending_update ()
-      && bitmap_set_bit (m_queued_insn_update_uids, insn->uid ()))
+      && bitmap_set_bit_result (m_queued_insn_update_uids, insn->uid ()))
     {
       gcc_assert (!change.is_deletion ());
       m_queued_insn_updates.safe_push (insn);

@@ -2797,7 +2797,7 @@ lto_output (void)
       varpool_node *vnode;
 
       if (flag_checking)
-	gcc_assert (bitmap_set_bit (output, DECL_UID (snode->decl)));
+	gcc_assert (bitmap_set_bit_result (output, DECL_UID (snode->decl)));
 
       decl_state = lto_new_out_decl_state ();
       lto_push_out_decl_state (decl_state);

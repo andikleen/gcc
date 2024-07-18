@@ -1598,7 +1598,7 @@ update_caller_keys (edge_heap_t *heap, struct cgraph_node *node,
   if ((!node->alias && !ipa_fn_summaries->get (node)->inlinable)
       || node->inlined_to)
     return;
-  if (!bitmap_set_bit (updated_nodes, node->get_uid ()))
+  if (!bitmap_set_bit_result (updated_nodes, node->get_uid ()))
     return;
 
   FOR_EACH_ALIAS (node, ref)

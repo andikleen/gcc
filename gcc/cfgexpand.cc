@@ -558,7 +558,7 @@ visit_conflict (gimple *, tree op, tree, void *data)
       && DECL_RTL_IF_SET (op) == pc_rtx)
     {
       unsigned *v = decl_to_stack_part->get (op);
-      if (v && bitmap_set_bit (active, *v))
+      if (v && bitmap_set_bit_result (active, *v))
 	{
 	  unsigned num = *v;
 	  bitmap_iterator bi;

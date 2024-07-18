@@ -4769,7 +4769,7 @@ find_moveable_pseudos (void)
 	      {
 		unsigned regno = DF_REF_REGNO (use);
 		bitmap_set_bit (used, regno);
-		if (bitmap_clear_bit (moveable, regno))
+		if (bitmap_clear_bit_result (moveable, regno))
 		  bitmap_clear_bit (transp, regno);
 	      }
 
@@ -5125,7 +5125,7 @@ split_live_ranges_for_shrink_wrap (void)
       bb = queue.pop ();
       FOR_EACH_EDGE (e, ei, bb->succs)
 	if (e->dest != EXIT_BLOCK_PTR_FOR_FN (cfun)
-	    && bitmap_set_bit (reachable, e->dest->index))
+	    && bitmap_set_bit_result (reachable, e->dest->index))
 	  queue.quick_push (e->dest);
     }
   queue.release ();

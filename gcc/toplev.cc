@@ -888,7 +888,7 @@ static void
 dump_final_callee_vcg (FILE *f, location_t location, tree callee)
 {
   if ((!callee || DECL_EXTERNAL (callee))
-      && bitmap_set_bit (callgraph_info_external_printed,
+      && bitmap_set_bit_result (callgraph_info_external_printed,
 			 callee ? DECL_UID (callee) + 1 : 0))
     {
       dump_final_node_vcg_start (f, callee);

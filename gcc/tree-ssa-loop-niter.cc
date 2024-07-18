@@ -4734,7 +4734,7 @@ maybe_lower_iteration_bound (class loop *loop)
 		  found_exit = true;
 		  break;
 		}
-	      if (bitmap_set_bit (visited, e->dest->index))
+	      if (bitmap_set_bit_result (visited, e->dest->index))
 		queue.safe_push (e->dest);
 	    }
 	}

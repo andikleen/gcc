@@ -284,7 +284,7 @@ check_argument_store (HOST_WIDE_INT size, HOST_WIDE_INT off,
     {
       if (byte < min_sp_off
 	  || byte >= max_sp_off
-	  || !bitmap_clear_bit (sp_bytes, byte - min_sp_off))
+	  || !bitmap_clear_bit_result (sp_bytes, byte - min_sp_off))
 	return false;
     }
   return true;
@@ -449,7 +449,7 @@ find_call_stack_args (rtx_call_insn *call_insn, bool do_mark, bool fast,
 	HOST_WIDE_INT off = sp_based_mem_offset (call_insn, mem, fast);
 	gcc_checking_assert (off != INTTYPE_MINIMUM (HOST_WIDE_INT));
 	for (HOST_WIDE_INT byte = off; byte < off + size; byte++)
-	  if (!bitmap_set_bit (sp_bytes, byte - min_sp_off))
+	  if (!bitmap_set_bit_result (sp_bytes, byte - min_sp_off))
 	    gcc_unreachable ();
       }
 

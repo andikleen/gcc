@@ -2401,7 +2401,7 @@ expr_expected_value_1 (tree type, tree op0, enum tree_code code,
       def = SSA_NAME_DEF_STMT (op0);
 
       /* If we were already here, break the infinite cycle.  */
-      if (!bitmap_set_bit (visited, SSA_NAME_VERSION (op0)))
+      if (!bitmap_set_bit_result (visited, SSA_NAME_VERSION (op0)))
 	return NULL;
 
       if (gphi *phi = dyn_cast <gphi *> (def))
@@ -3338,7 +3338,7 @@ predict_paths_for_bb (basic_block cur, basic_block bb,
 	 prevent visiting given BB twice.  */
       if (found)
 	maybe_predict_edge (e, pred, taken);
-      else if (bitmap_set_bit (visited, e->src->index))
+      else if (bitmap_set_bit_result (visited, e->src->index))
 	predict_paths_for_bb (e->src, e->src, pred, taken, visited, in_loop);
     }
   for (son = first_dom_son (CDI_POST_DOMINATORS, cur);

@@ -1012,7 +1012,7 @@ get_loop_body_in_bfs_order (const class loop *loop)
 	  if (flow_bb_inside_loop_p (loop, e->dest))
 	    {
 	      /* This bb is now visited.  */
-	      if (bitmap_set_bit (visited, e->dest->index))
+	      if (bitmap_set_bit_result (visited, e->dest->index))
 		blocks[i++] = e->dest;
 	    }
 	}

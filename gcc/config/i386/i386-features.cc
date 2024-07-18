@@ -318,7 +318,7 @@ scalar_chain::~scalar_chain ()
 void
 scalar_chain::add_to_queue (unsigned insn_uid)
 {
-  if (!bitmap_set_bit (queue, insn_uid))
+  if (!bitmap_set_bit_result (queue, insn_uid))
     return;
 
   if (dump_file)
@@ -336,10 +336,10 @@ scalar_chain::mark_dual_mode_def (df_ref def)
 
   /* Record the def/insn pair so we can later efficiently iterate over
      the defs to convert on insns not in the chain.  */
-  bool reg_new = bitmap_set_bit (defs_conv, DF_REF_REGNO (def));
+  bool reg_new = bitmap_set_bit_result (defs_conv, DF_REF_REGNO (def));
   if (!bitmap_bit_p (insns, DF_REF_INSN_UID (def)))
     {
-      if (!bitmap_set_bit (insns_conv, DF_REF_INSN_UID (def))
+      if (!bitmap_set_bit_result (insns_conv, DF_REF_INSN_UID (def))
 	  && !reg_new)
 	return;
       n_integer_to_sse++;
@@ -425,7 +425,7 @@ bool
 scalar_chain::add_insn (bitmap candidates, unsigned int insn_uid,
 			bitmap disallowed)
 {
-  if (!bitmap_set_bit (insns, insn_uid))
+  if (!bitmap_set_bit_result (insns, insn_uid))
     return true;
 
   if (dump_file)

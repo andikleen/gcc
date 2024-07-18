@@ -158,7 +158,7 @@ add_ssa_edge (tree var)
 	       & EDGE_EXECUTABLE))
 	continue;
 
-      if (bitmap_set_bit (ssa_edge_worklist, gimple_uid (use_stmt)))
+      if (bitmap_set_bit_result (ssa_edge_worklist, gimple_uid (use_stmt)))
 	{
 	  uid_to_stmt[gimple_uid (use_stmt)] = use_stmt;
 	  if (dump_file && (dump_flags & TDF_DETAILS))

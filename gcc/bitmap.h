@@ -431,11 +431,17 @@ extern bool bitmap_ior_and_compl (bitmap DST, const_bitmap A,
 extern bool bitmap_ior_and_compl_into (bitmap A,
 				       const_bitmap B, const_bitmap C);
 
+/* Clear a single bit in a bitmap.  */
+extern void bitmap_clear_bit (bitmap, int);
+
 /* Clear a single bit in a bitmap.  Return true if the bit changed.  */
-extern bool bitmap_clear_bit (bitmap, int);
+extern bool bitmap_clear_bit_result (bitmap, int);
+
+/* Set a single bit in a bitmap.  */
+extern void bitmap_set_bit (bitmap, int);
 
 /* Set a single bit in a bitmap.  Return true if the bit changed.  */
-extern bool bitmap_set_bit (bitmap, int);
+extern bool bitmap_set_bit_result (bitmap, int);
 
 /* Return true if a bit is set in a bitmap.  */
 extern bool bitmap_bit_p (const_bitmap, int);

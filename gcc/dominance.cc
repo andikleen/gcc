@@ -1512,7 +1512,7 @@ iterate_fix_dominators (enum cdi_direction dir, vec<basic_block> &bbs,
 	  dom_i = *map.get (dom);
 
 	  /* Do not include parallel edges to G.  */
-	  if (!bitmap_set_bit ((bitmap) g->vertices[dom_i].data, i))
+	  if (!bitmap_set_bit_result ((bitmap) g->vertices[dom_i].data, i))
 	    continue;
 
 	  add_edge (g, dom_i, i);

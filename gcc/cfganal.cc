@@ -773,7 +773,7 @@ dfs_find_deadend (basic_block bb)
       if (EDGE_COUNT (next->succs) == 0)
 	return next;
 
-      if (! bitmap_set_bit (visited, next->index))
+      if (! bitmap_set_bit_result (visited, next->index))
 	return bb;
 
       bb = next;
@@ -1656,7 +1656,7 @@ compute_dominance_frontiers (bitmap_head *frontiers)
 
 	      while (runner != domsb)
 		{
-		  if (!bitmap_set_bit (&frontiers[runner->index], b->index))
+		  if (!bitmap_set_bit_result (&frontiers[runner->index], b->index))
 		    break;
 		  runner = get_immediate_dominator (CDI_DOMINATORS, runner);
 		}
@@ -1717,7 +1717,7 @@ compute_idf (bitmap def_blocks, bitmap_head *dfs)
 	 as well.  That makes iterating over the DFS bitmap preferential
 	 to whole bitmap operations involving also phi_insertion_points.  */
       EXECUTE_IF_SET_IN_BITMAP (&dfs[bb_index], 0, i, bi)
-	if (bitmap_set_bit (phi_insertion_points, i))
+	if (bitmap_set_bit_result (phi_insertion_points, i))
 	  bitmap_set_bit (work_set, i);
     }
 

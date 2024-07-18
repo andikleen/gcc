@@ -1066,7 +1066,7 @@ get_range_strlen_phi (tree src, gphi *phi,
 		      c_strlen_data *pdata, bitmap visited,
 		      pointer_query *ptr_qry, unsigned *pssa_def_max)
 {
-  if (!bitmap_set_bit (visited, SSA_NAME_VERSION (src)))
+  if (!bitmap_set_bit_result (visited, SSA_NAME_VERSION (src)))
     return true;
 
   if (*pssa_def_max == 0)
@@ -5730,7 +5730,7 @@ do_invalidate (basic_block dombb, gimple *phi, bitmap visited, int *count)
       basic_block bb = gimple_bb (stmt);
       if (bb == NULL
 	  || bb == dombb
-	  || !bitmap_set_bit (visited, bb->index)
+	  || !bitmap_set_bit_result (visited, bb->index)
 	  || !dominated_by_p (CDI_DOMINATORS, bb, dombb))
 	continue;
       while (1)
@@ -5756,7 +5756,7 @@ do_invalidate (basic_block dombb, gimple *phi, bitmap visited, int *count)
 	      bb = gimple_bb (stmt);
 	      if (bb == NULL
 		  || bb == dombb
-		  || !bitmap_set_bit (visited, bb->index)
+		  || !bitmap_set_bit_result (visited, bb->index)
 		  || !dominated_by_p (CDI_DOMINATORS, bb, dombb))
 		break;
 	    }

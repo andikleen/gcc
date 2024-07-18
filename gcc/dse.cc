@@ -1007,7 +1007,7 @@ set_usage_bits (group_info *group, poly_int64 offset, poly_int64 width,
 	    ai = i;
 	  }
 
-	if (!bitmap_set_bit (store1, ai))
+	if (!bitmap_set_bit_result (store1, ai))
 	  bitmap_set_bit (store2, ai);
 	else
 	  {
@@ -1255,7 +1255,7 @@ set_position_unneeded (store_info *s_info, int pos)
 {
   if (UNLIKELY (s_info->is_large))
     {
-      if (bitmap_set_bit (s_info->positions_needed.large.bmap, pos))
+      if (bitmap_set_bit_result (s_info->positions_needed.large.bmap, pos))
 	s_info->positions_needed.large.count++;
     }
   else

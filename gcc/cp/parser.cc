@@ -48852,7 +48852,7 @@ cp_parser_omp_assumption_clauses (cp_parser *parser, cp_token *pragma_tok,
 				      directive[1] ? directive[1] : "",
 				      directive[2] ? " " : "",
 				      directive[2] ? directive[2] : "");
-			  else if (!bitmap_set_bit (p[0] == 'a'
+			  else if (!bitmap_set_bit_result (p[0] == 'a'
 						    ? &absent_head
 						    : &contains_head, id))
 			    error_at (dloc, "%<%s%s%s%s%s%> directive "

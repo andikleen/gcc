@@ -4044,7 +4044,7 @@ pop:
 	         over PHI args).  */
 	      while (curr != NULL_USE_OPERAND_P
 		     && (TREE_CODE (USE_FROM_PTR (curr)) != SSA_NAME
-			 || ! bitmap_set_bit (visited,
+			 || ! bitmap_set_bit_result (visited,
 					      SSA_NAME_VERSION
 					        (USE_FROM_PTR (curr)))));
 	    }
@@ -4060,7 +4060,7 @@ pop:
 	    curr = op_iter_init_use (&curri, def, SSA_OP_USE);
 	  while (curr != NULL_USE_OPERAND_P
 		 && (TREE_CODE (USE_FROM_PTR (curr)) != SSA_NAME
-		     || ! bitmap_set_bit (visited,
+		     || ! bitmap_set_bit_result (visited,
 					  SSA_NAME_VERSION
 					    (USE_FROM_PTR (curr)))))
 	    curr = op_iter_next_use (&curri);

@@ -4637,7 +4637,7 @@ create_block_for_bookkeeping (edge e1, edge e2)
 		if (INSN_P (insn))
 		  EXPR_ORIG_BB_INDEX (INSN_EXPR (insn)) = succ->index;
 
-	      if (bitmap_clear_bit (code_motion_visited_blocks, new_bb->index))
+	      if (bitmap_clear_bit_result (code_motion_visited_blocks, new_bb->index))
 		bitmap_set_bit (code_motion_visited_blocks, succ->index);
 
 	      gcc_assert (LABEL_P (BB_HEAD (new_bb))
@@ -5817,7 +5817,7 @@ track_scheduled_insns_and_blocks (rtx_insn *insn)
      we still need to count it as an originator.  */
   bitmap_set_bit (current_originators, INSN_UID (insn));
 
-  if (!bitmap_clear_bit (current_copies, INSN_UID (insn)))
+  if (!bitmap_clear_bit_result (current_copies, INSN_UID (insn)))
     {
       /* Note that original block needs to be rescheduled, as we pulled an
 	 instruction out of it.  */

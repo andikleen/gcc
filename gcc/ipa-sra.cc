@@ -990,7 +990,7 @@ isra_track_scalar_value_uses (function *fun, cgraph_node *node, tree name,
 	      break;
 	    }
 	  gcc_assert (!gimple_vdef (stmt));
-	  if (bitmap_set_bit (analyzed, SSA_NAME_VERSION (lhs)))
+	  if (bitmap_set_bit_result (analyzed, SSA_NAME_VERSION (lhs)))
 	    {
 	      int tmp = isra_track_scalar_value_uses (fun, node, lhs, parm_num,
 						      analyzed, desc);
@@ -2153,7 +2153,7 @@ ssa_name_only_returned_p (function *fun, tree name, bitmap analyzed)
 	      break;
 	    }
 	  gcc_assert (!gimple_vdef (stmt));
-	  if (bitmap_set_bit (analyzed, SSA_NAME_VERSION (lhs))
+	  if (bitmap_set_bit_result (analyzed, SSA_NAME_VERSION (lhs))
 	      && !ssa_name_only_returned_p (fun, lhs, analyzed))
 	    {
 	      res = false;

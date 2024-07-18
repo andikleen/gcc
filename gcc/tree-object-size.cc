@@ -1783,7 +1783,7 @@ collect_object_sizes_for (struct object_size_info *osi, tree var)
 
   if (osi->pass == 0)
     {
-      if (bitmap_set_bit (osi->visited, varno))
+      if (bitmap_set_bit_result (osi->visited, varno))
 	{
 	  /* Initialize to 0 for maximum size and M1U for minimum size so that
 	     it gets immediately overridden.  */

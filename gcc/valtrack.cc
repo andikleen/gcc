@@ -429,7 +429,7 @@ dead_debug_promote_uses (struct dead_debug_local *debug)
       if (!debug->global->used)
 	debug->global->used = BITMAP_ALLOC (NULL);
 
-      bool added = bitmap_set_bit (debug->global->used, REGNO (reg));
+      bool added = bitmap_set_bit_result (debug->global->used, REGNO (reg));
       gcc_checking_assert (added);
 
       entry = dead_debug_global_insert (debug->global, reg,
@@ -591,7 +591,7 @@ dead_debug_insert_temp (struct dead_debug_local *debug, unsigned int uregno,
   global = (debug->global && debug->global->used
 	    && bitmap_bit_p (debug->global->used, uregno));
 
-  if (!global && !bitmap_clear_bit (debug->used, uregno))
+  if (!global && !bitmap_clear_bit_result (debug->used, uregno))
     return 0;
 
   /* Move all uses of uregno from debug->head to uses, setting mode to

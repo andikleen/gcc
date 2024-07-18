@@ -309,7 +309,7 @@ backprop::lookup_operand (tree op)
 void
 backprop::push_to_worklist (tree var)
 {
-  if (!bitmap_set_bit (m_worklist_names, SSA_NAME_VERSION (var)))
+  if (!bitmap_set_bit_result (m_worklist_names, SSA_NAME_VERSION (var)))
     return;
   m_worklist.safe_push (var);
   if (dump_file && (dump_flags & TDF_DETAILS))

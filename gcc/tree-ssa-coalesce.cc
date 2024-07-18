@@ -622,7 +622,7 @@ ssa_conflicts_merge (ssa_conflicts *ptr, unsigned x, unsigned y)
       bitmap bz = ptr->conflicts[z];
       if (bz)
 	{
-	  bool was_there = bitmap_clear_bit (bz, y);
+	  bool was_there = bitmap_clear_bit_result (bz, y);
 	  gcc_checking_assert (was_there);
 	  bitmap_set_bit (bz, x);
 	}
@@ -745,7 +745,7 @@ live_track_add_partition (live_track *ptr, int partition)
   root = basevar_index (ptr->map, partition);
   /* If this base var wasn't live before, it is now.  Clear the element list
      since it was delayed until needed.  */
-  if (bitmap_set_bit (&ptr->live_base_var, root))
+  if (bitmap_set_bit_result (&ptr->live_base_var, root))
     bitmap_clear (&ptr->live_base_partitions[root]);
   bitmap_set_bit (&ptr->live_base_partitions[root], partition);
 

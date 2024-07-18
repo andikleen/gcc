@@ -431,7 +431,7 @@ back_threader::find_paths_to_names (basic_block bb, bitmap interesting,
 		    {
 		      tree rhs = ssa[j];
 		      if (rhs
-			  && bitmap_set_bit (m_imports,
+			  && bitmap_set_bit_result (m_imports,
 					     SSA_NAME_VERSION (rhs)))
 			{
 			  new_imports.safe_push (SSA_NAME_VERSION (rhs));
@@ -465,9 +465,9 @@ back_threader::find_paths_to_names (basic_block bb, bitmap interesting,
 		  if (TREE_CODE (def) == SSA_NAME)
 		    {
 		      int ver = SSA_NAME_VERSION (def);
-		      if (bitmap_set_bit (new_interesting, ver))
+		      if (bitmap_set_bit_result (new_interesting, ver))
 			{
-			  if (bitmap_set_bit (m_imports, ver))
+			  if (bitmap_set_bit_result (m_imports, ver))
 			    imports_unwind.quick_push (ver);
 			  unwind.quick_push (ver);
 			}

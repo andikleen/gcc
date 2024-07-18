@@ -1340,7 +1340,7 @@ loop_rev_post_order_compute (int *post_order, class loop *loop)
       /* Check if the edge destination has been visited yet and mark it
          if not so.  */
       if (flow_bb_inside_loop_p (loop, dest)
-	  && bitmap_set_bit (visited, dest->index))
+	  && bitmap_set_bit_result (visited, dest->index))
 	{
 	  if (EDGE_COUNT (dest->succs) > 0)
 	    /* Since the DEST node has been visited for the first
@@ -1406,7 +1406,7 @@ loop_inverted_rev_post_order_compute (int *post_order, class loop *loop)
       /* Check if the predecessor has been visited yet and mark it
 	 if not so.  */
       if (flow_bb_inside_loop_p (loop, pred)
-	  && bitmap_set_bit (visited, pred->index))
+	  && bitmap_set_bit_result (visited, pred->index))
 	{
 	  if (EDGE_COUNT (pred->preds) > 0)
 	    /* Since the predecessor node has been visited for the first

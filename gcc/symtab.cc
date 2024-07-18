@@ -1404,7 +1404,7 @@ is_caller_ifunc_resolver (cgraph_node *node)
 
       /* Skip if it has been visited.  */
       unsigned int uid = e->caller->get_uid ();
-      if (!bitmap_set_bit (ifunc_ref_map, uid))
+      if (!bitmap_set_bit_result (ifunc_ref_map, uid))
 	continue;
 
       if (is_caller_ifunc_resolver (e->caller))

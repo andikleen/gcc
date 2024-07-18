@@ -3464,7 +3464,7 @@ calculate_bb_reg_pressure (void)
 	      if (!(DF_REF_FLAGS (def)
 		    & (DF_REF_PARTIAL | DF_REF_CONDITIONAL)))
 		{
-		  if (bitmap_clear_bit (curr_regs_live, regno))
+		  if (bitmap_clear_bit_result (curr_regs_live, regno))
 		    change_pressure (regno, false);
 		}
 	    }
@@ -3474,7 +3474,7 @@ calculate_bb_reg_pressure (void)
 	      dreg = DF_REF_REAL_REG (use);
 	      gcc_assert (REG_P (dreg));
 	      regno = REGNO (dreg);
-	      if (bitmap_set_bit (curr_regs_live, regno))
+	      if (bitmap_set_bit_result (curr_regs_live, regno))
 		change_pressure (regno, true);
 	    }
 	}

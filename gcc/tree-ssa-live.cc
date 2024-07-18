@@ -318,7 +318,7 @@ static bitmap usedvars;
 static inline bool
 set_is_used (tree var)
 {
-  return bitmap_set_bit (usedvars, DECL_UID (var));
+  return bitmap_set_bit_result (usedvars, DECL_UID (var));
 }
 
 /* Return true if VAR is marked as used.  */

@@ -1641,7 +1641,7 @@ omp_verify_merge_absent_contains (gfc_statement st, gfc_omp_assumptions *check,
 
   match m = MATCH_YES;
   for (int i = 0; i < check->n_absent; i++)
-    if (!bitmap_set_bit (&absent_head, check->absent[i]))
+    if (!bitmap_set_bit_result (&absent_head, check->absent[i]))
       {
 	gfc_error ("%qs directive mentioned multiple times in %s clause in %s "
 		   "directive at %L",
@@ -1651,7 +1651,7 @@ omp_verify_merge_absent_contains (gfc_statement st, gfc_omp_assumptions *check,
       }
   for (int i = 0; i < check->n_contains; i++)
     {
-      if (!bitmap_set_bit (&contains_head, check->contains[i]))
+      if (!bitmap_set_bit_result (&contains_head, check->contains[i]))
 	{
 	  gfc_error ("%qs directive mentioned multiple times in %s clause in %s "
 		     "directive at %L",

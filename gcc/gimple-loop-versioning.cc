@@ -611,7 +611,7 @@ loop_versioning::version_for_unity (gimple *stmt, tree name)
   class loop *loop = loop_containing_stmt (stmt);
   loop_info &li = get_loop_info (loop);
 
-  if (bitmap_set_bit (&li.unity_names, SSA_NAME_VERSION (name)))
+  if (bitmap_set_bit_result (&li.unity_names, SSA_NAME_VERSION (name)))
     {
       /* This is the first time we've wanted to version LOOP for NAME.
 	 Keep track of the outermost loop that can handle all versioning

@@ -1277,7 +1277,7 @@ pair_fusion_bb_info::track_tombstone (int uid)
       m_emitted_tombstone = true;
     }
 
-  if (!bitmap_set_bit (&m_tombstone_bitmap, uid))
+  if (!bitmap_set_bit_result (&m_tombstone_bitmap, uid))
     gcc_unreachable (); // Bit should have changed.
 }
 

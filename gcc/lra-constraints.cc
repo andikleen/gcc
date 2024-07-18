@@ -7283,7 +7283,7 @@ fix_bb_live_info (bitmap live, bitmap removed_pseudos)
   bitmap_iterator bi;
 
   EXECUTE_IF_SET_IN_BITMAP (removed_pseudos, 0, regno, bi)
-    if (bitmap_clear_bit (live, regno)
+    if (bitmap_clear_bit_result (live, regno)
 	&& REG_P (lra_reg_info[regno].restore_rtx))
       bitmap_set_bit (live, REGNO (lra_reg_info[regno].restore_rtx));
 }

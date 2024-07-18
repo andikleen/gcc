@@ -1498,7 +1498,7 @@ add_regs_to_insn_regno_info (lra_insn_recog_data_t data, rtx x,
       /* Process all regs even unallocatable ones as we need info about
 	 all regs for rematerialization pass.  */
       expand_reg_info ();
-      if (bitmap_set_bit (&lra_reg_info[regno].insn_bitmap, INSN_UID (insn)))
+      if (bitmap_set_bit_result (&lra_reg_info[regno].insn_bitmap, INSN_UID (insn)))
 	{
 	  data->regs = new_insn_reg (data->insn, regno, type, mode, subreg_p,
 				     early_clobber_alts, data->regs);

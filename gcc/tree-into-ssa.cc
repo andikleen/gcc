@@ -255,7 +255,7 @@ mark_for_renaming (tree sym)
 {
   if (!symbols_to_rename_set)
     symbols_to_rename_set = BITMAP_ALLOC (NULL);
-  if (bitmap_set_bit (symbols_to_rename_set, DECL_UID (sym)))
+  if (bitmap_set_bit_result (symbols_to_rename_set, DECL_UID (sym)))
     symbols_to_rename.safe_push (sym);
 }
 
@@ -448,7 +448,7 @@ static void
 mark_block_for_update (basic_block bb)
 {
   gcc_checking_assert (blocks_to_update != NULL);
-  if (!bitmap_set_bit (blocks_to_update, bb->index))
+  if (!bitmap_set_bit_result (blocks_to_update, bb->index))
     return;
   initialize_flags_in_bb (bb);
 }
@@ -895,7 +895,7 @@ prune_unused_phi_nodes (bitmap phis, bitmap kills, bitmap uses)
 	}
 
       /* If the phi node is already live, there is nothing to do.  */
-      if (!bitmap_set_bit (live_phis, p))
+      if (!bitmap_set_bit_result (live_phis, p))
 	continue;
 
       /* Add the new uses to the worklist.  */
@@ -953,7 +953,7 @@ mark_phi_for_rewrite (basic_block bb, gphi *phi)
   if (!blocks_with_phis_to_rewrite)
     return;
 
-  if (bitmap_set_bit (blocks_with_phis_to_rewrite, idx))
+  if (bitmap_set_bit_result (blocks_with_phis_to_rewrite, idx))
     {
       n = (unsigned) last_basic_block_for_fn (cfun) + 1;
       if (phis_to_rewrite.length () < n)

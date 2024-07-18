@@ -967,14 +967,14 @@ mark_regno_birth_or_death (bitmap live, int *pressure, int regno, bool birth_p)
 	{
 	  if (birth_p)
 	    {
-	      if (!live || bitmap_set_bit (live, regno))
+	      if (!live || bitmap_set_bit_result (live, regno))
 		pressure[pressure_class]
 		  += (ira_reg_class_max_nregs
 		      [pressure_class][PSEUDO_REGNO_MODE (regno)]);
 	    }
 	  else
 	    {
-	      if (!live || bitmap_clear_bit (live, regno))
+	      if (!live || bitmap_clear_bit_result (live, regno))
 		pressure[pressure_class]
 		  -= (ira_reg_class_max_nregs
 		      [pressure_class][PSEUDO_REGNO_MODE (regno)]);
@@ -986,12 +986,12 @@ mark_regno_birth_or_death (bitmap live, int *pressure, int regno, bool birth_p)
     {
       if (birth_p)
 	{
-	  if (!live || bitmap_set_bit (live, regno))
+	  if (!live || bitmap_set_bit_result (live, regno))
 	    pressure[pressure_class]++;
 	}
       else
 	{
-	  if (!live || bitmap_clear_bit (live, regno))
+	  if (!live || bitmap_clear_bit_result (live, regno))
 	    pressure[pressure_class]--;
 	}
     }
@@ -2147,7 +2147,7 @@ model_recompute (rtx_insn *insn)
   for (use = INSN_REG_USE_LIST (insn); use != NULL; use = use->next_insn_use)
     {
       new_last = model_last_use_except (use);
-      if (new_last < point && bitmap_set_bit (tmp_bitmap, use->regno))
+      if (new_last < point && bitmap_set_bit_result (tmp_bitmap, use->regno))
 	{
 	  gcc_assert (num_uses < ARRAY_SIZE (uses));
 	  uses[num_uses].last_use = new_last;
@@ -7506,7 +7506,7 @@ fix_inter_tick (rtx_insn *head, rtx_insn *tail)
 	  gcc_assert (tick >= MIN_TICK);
 
 	  /* Fix INSN_TICK of instruction from just scheduled block.  */
-	  if (bitmap_set_bit (processed, INSN_LUID (head)))
+	  if (bitmap_set_bit_result (processed, INSN_LUID (head)))
 	    {
 	      tick -= next_clock;
 
@@ -7530,7 +7530,7 @@ fix_inter_tick (rtx_insn *head, rtx_insn *tail)
 		  /* If NEXT has its INSN_TICK calculated, fix it.
 		     If not - it will be properly calculated from
 		     scratch later in fix_tick_ready.  */
-		  && bitmap_set_bit (processed, INSN_LUID (next)))
+		  && bitmap_set_bit_result (processed, INSN_LUID (next)))
 		{
 		  tick -= next_clock;
 
@@ -8612,7 +8612,7 @@ fix_recovery_deps (basic_block rec)
 	    {
 	      sd_delete_dep (sd_it);
 
-	      if (bitmap_set_bit (in_ready, INSN_LUID (consumer)))
+	      if (bitmap_set_bit_result (in_ready, INSN_LUID (consumer)))
 		ready_list.safe_push (consumer);
 	    }
 	  else

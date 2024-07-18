@@ -478,7 +478,7 @@ path_range_query::add_to_exit_dependencies (tree name, bitmap dependencies)
 {
   if (TREE_CODE (name) == SSA_NAME
       && value_range::supports_type_p (TREE_TYPE (name)))
-    return bitmap_set_bit (dependencies, SSA_NAME_VERSION (name));
+    return bitmap_set_bit_result (dependencies, SSA_NAME_VERSION (name));
   return false;
 }
 
@@ -519,7 +519,7 @@ path_range_query::compute_exit_dependencies (bitmap dependencies)
 
 	      if (TREE_CODE (arg) == SSA_NAME
 		  && m_path.contains (e->src)
-		  && bitmap_set_bit (dependencies, SSA_NAME_VERSION (arg)))
+		  && bitmap_set_bit_result (dependencies, SSA_NAME_VERSION (arg)))
 		worklist.safe_push (arg);
 	    }
 	}

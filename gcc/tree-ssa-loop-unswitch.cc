@@ -453,7 +453,7 @@ is_maybe_undefined (const tree name, gimple *stmt, class loop *loop)
 		 but we can continue and ignore this use.  Otherwise,
 		 add the SSA_NAME to the queue and visit it later.  */
 	      if (TREE_CODE (t) == SSA_NAME
-		  && bitmap_set_bit (visited_ssa, SSA_NAME_VERSION (t)))
+		  && bitmap_set_bit_result (visited_ssa, SSA_NAME_VERSION (t)))
 		worklist.safe_push (t);
 	    }
 	  continue;
@@ -480,7 +480,7 @@ is_maybe_undefined (const tree name, gimple *stmt, class loop *loop)
 	  /* If an SSA has already been seen, it may be a loop,
 	     but we can continue and ignore this use.  Otherwise,
 	     add the SSA_NAME to the queue and visit it later.  */
-	  if (bitmap_set_bit (visited_ssa, SSA_NAME_VERSION (t)))
+	  if (bitmap_set_bit_result (visited_ssa, SSA_NAME_VERSION (t)))
 	    worklist.safe_push (t);
 	}
     }

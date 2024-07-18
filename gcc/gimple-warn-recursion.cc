@@ -84,7 +84,7 @@ pass_warn_recursion::pass_warn_recursion (gcc::context *ctxt)
 bool
 pass_warn_recursion::find_function_exit (basic_block bb)
 {
-  if (!bitmap_set_bit (m_visited, bb->index))
+  if (!bitmap_set_bit_result (m_visited, bb->index))
     return false;
 
   if (bb == EXIT_BLOCK_PTR_FOR_FN (m_func))

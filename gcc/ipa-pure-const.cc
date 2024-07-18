@@ -894,7 +894,7 @@ malloc_candidate_p_1 (function *fun, tree retval, gimple *ret_stmt, bool ipa,
 		      bitmap visited)
 {
   cgraph_node *node = cgraph_node::get_create (fun->decl);
-  if (!bitmap_set_bit (visited, SSA_NAME_VERSION (retval)))
+  if (!bitmap_set_bit_result (visited, SSA_NAME_VERSION (retval)))
     return true;
 
   if (!check_retval_uses (retval, ret_stmt))

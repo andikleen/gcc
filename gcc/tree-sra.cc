@@ -758,7 +758,7 @@ static bool constant_decl_p (tree decl)
 static void
 disqualify_candidate (tree decl, const char *reason)
 {
-  if (bitmap_clear_bit (candidate_bitmap, DECL_UID (decl)))
+  if (bitmap_clear_bit_result (candidate_bitmap, DECL_UID (decl)))
     candidates->remove_elt_with_hash (decl, DECL_UID (decl));
   if (constant_decl_p (decl))
     bitmap_set_bit (disqualified_constants, DECL_UID (decl));

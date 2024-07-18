@@ -1042,7 +1042,7 @@ early_remat::sort_candidates (void)
   FOR_EACH_VEC_ELT (m_candidates, cand_index, cand)
     {
       basic_block bb = BLOCK_FOR_INSN (cand->insn);
-      if (bitmap_set_bit (&m_tmp_bitmap, bb->index))
+      if (bitmap_set_bit_result (&m_tmp_bitmap, bb->index))
 	df_recompute_luids (bb);
     }
 
@@ -1768,7 +1768,7 @@ early_remat::stabilize_candidate_uses (unsigned int cand_index,
       remat_candidate *def_cand = &m_candidates[def_index];
       rtx *loc = DF_REF_REAL_LOC (use);
       rtx new_reg;
-      if (bitmap_set_bit (via_copy, def_index))
+      if (bitmap_set_bit_result (via_copy, def_index))
 	{
 	  new_reg = gen_reg_rtx (GET_MODE (*loc));
 	  def_cand->copy_regno = REGNO (new_reg);

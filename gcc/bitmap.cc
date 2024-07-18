@@ -916,7 +916,7 @@ bitmap_move (bitmap to, bitmap from)
 /* Clear a single bit in a bitmap.  Return true if the bit changed.  */
 
 bool
-bitmap_clear_bit (bitmap head, int bit)
+bitmap_clear_bit_result (bitmap head, int bit)
 {
   unsigned int indx = bit / BITMAP_ELEMENT_ALL_BITS;
   bitmap_element *ptr;
@@ -951,10 +951,40 @@ bitmap_clear_bit (bitmap head, int bit)
   return false;
 }
 
+/* Clear a single bit in a bitmap.  */
+
+void
+bitmap_clear_bit (bitmap head, int bit)
+{
+  unsigned int indx = bit / BITMAP_ELEMENT_ALL_BITS;
+  bitmap_element *ptr;
+
+  if (!head->tree_form)
+    ptr = bitmap_list_find_element (head, indx);
+  else
+    ptr = bitmap_tree_find_element (head, indx);
+  if (ptr != 0)
+    {
+      unsigned bit_num  = bit % BITMAP_WORD_BITS;
+      unsigned word_num = bit / BITMAP_WORD_BITS % BITMAP_ELEMENT_WORDS;
+      BITMAP_WORD bit_val = ((BITMAP_WORD) 1) << bit_num;
+      ptr->bits[word_num] &= ~bit_val;
+      /* If we cleared the entire word, free up the element.  */
+      if (!ptr->bits[word_num] && bitmap_element_zerop (ptr))
+        {
+	  if (!head->tree_form)
+	    bitmap_list_unlink_element (head, ptr);
+	  else
+	    bitmap_tree_unlink_element (head, ptr);
+	}
+    }
+}
+
+
 /* Set a single bit in a bitmap.  Return true if the bit changed.  */
 
 bool
-bitmap_set_bit (bitmap head, int bit)
+bitmap_set_bit_result (bitmap head, int bit)
 {
   unsigned indx = bit / BITMAP_ELEMENT_ALL_BITS;
   bitmap_element *ptr;
@@ -983,6 +1013,37 @@ bitmap_set_bit (bitmap head, int bit)
     bitmap_tree_link_element (head, ptr);
   return true;
 }
+
+/* Set a single bit in a bitmap.  */
+
+void
+bitmap_set_bit (bitmap head, int bit)
+{
+  unsigned indx = bit / BITMAP_ELEMENT_ALL_BITS;
+  bitmap_element *ptr;
+  if (!head->tree_form)
+    ptr = bitmap_list_find_element (head, indx);
+  else
+    ptr = bitmap_tree_find_element (head, indx);
+  unsigned word_num = bit / BITMAP_WORD_BITS % BITMAP_ELEMENT_WORDS;
+  unsigned bit_num  = bit % BITMAP_WORD_BITS;
+  BITMAP_WORD bit_val = ((BITMAP_WORD) 1) << bit_num;
+
+  if (ptr != 0)
+    {
+      ptr->bits[word_num] |= bit_val;
+      return;
+    }
+
+  ptr = bitmap_element_allocate (head);
+  ptr->indx = bit / BITMAP_ELEMENT_ALL_BITS;
+  ptr->bits[word_num] = bit_val;
+  if (!head->tree_form)
+    bitmap_list_link_element (head, ptr);
+  else
+    bitmap_tree_link_element (head, ptr);
+}
+
 
 /* Return whether a bit is set within a bitmap.  */
 
@@ -2930,7 +2991,7 @@ test_clear_bit_in_middle ()
   ASSERT_EQ (100, bitmap_count_bits (b));
 
   /* Clear a bit in the middle.  */
-  bool changed = bitmap_clear_bit (b, 150);
+  bool changed = bitmap_clear_bit_result (b, 150);
   ASSERT_TRUE (changed);
   ASSERT_EQ (99, bitmap_count_bits (b));
   ASSERT_TRUE (bitmap_bit_p (b, 149));

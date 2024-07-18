@@ -2051,7 +2051,7 @@ assign_hard_reg (ira_allocno_t a, bool retry_p)
 				  : ira_soft_conflict (a, conflict_a));
 		  if (spill_a)
 		    {
-		      if (bitmap_set_bit (allocnos_to_spill,
+		      if (bitmap_set_bit_result (allocnos_to_spill,
 					  ALLOCNO_NUM (spill_a)))
 			{
 			  ira_loop_border_costs border_costs (spill_a);
@@ -3273,7 +3273,7 @@ improve_allocation (void)
 	      auto spill_a = ira_soft_conflict (a, conflict_a);
 	      if (spill_a)
 		{
-		  if (!bitmap_set_bit (allocnos_to_spill,
+		  if (!bitmap_set_bit_result (allocnos_to_spill,
 				       ALLOCNO_NUM (spill_a)))
 		    continue;
 		  ira_loop_border_costs border_costs (spill_a);
@@ -4064,7 +4064,8 @@ ira_reassign_conflict_allocnos (int start_regno)
 
 	      ira_assert (ira_reg_classes_intersect_p
 			  [aclass][ALLOCNO_CLASS (conflict_a)]);
-	      if (!bitmap_set_bit (allocnos_to_color, ALLOCNO_NUM (conflict_a)))
+	      if (!bitmap_set_bit_result (allocnos_to_color,
+					  ALLOCNO_NUM (conflict_a)))
 		continue;
 	      sorted_allocnos[allocnos_to_color_num++] = conflict_a;
 	    }
@@ -4869,11 +4870,11 @@ ira_reassign_pseudos (int *spilled_pseudo_regs, int num,
 	      ira_allocno_t conflict_a = OBJECT_ALLOCNO (conflict_obj);
 	      if (ALLOCNO_HARD_REGNO (conflict_a) < 0
 		  && ! ALLOCNO_DONT_REASSIGN_P (conflict_a)
-		  && bitmap_set_bit (temp, ALLOCNO_REGNO (conflict_a)))
+		  && bitmap_set_bit_result (temp, ALLOCNO_REGNO (conflict_a)))
 		{
 		  spilled_pseudo_regs[num++] = ALLOCNO_REGNO (conflict_a);
 		  /* ?!? This seems wrong.  */
-		  bitmap_set_bit (consideration_allocno_bitmap,
+		  bitmap_set_bit_result (consideration_allocno_bitmap,
 				  ALLOCNO_NUM (conflict_a));
 		}
 	    }

@@ -791,7 +791,7 @@ try_shrink_wrapping (edge *entry_edge, rtx_insn *prologue_seq)
 	    {
 	      pro = get_immediate_dominator (CDI_DOMINATORS, pro);
 
-	      if (bitmap_set_bit (bb_with, pro->index))
+	      if (bitmap_set_bit_result (bb_with, pro->index))
 		vec.quick_push (pro);
 	    }
 	  checked_pro = pro;
@@ -808,13 +808,13 @@ try_shrink_wrapping (edge *entry_edge, rtx_insn *prologue_seq)
 
 	    pro = get_immediate_dominator (CDI_DOMINATORS, pro);
 
-	    if (bitmap_set_bit (bb_with, pro->index))
+	    if (bitmap_set_bit_result (bb_with, pro->index))
 	      vec.quick_push (pro);
 	  }
 
       FOR_EACH_EDGE (e, ei, bb->succs)
 	if (e->dest != EXIT_BLOCK_PTR_FOR_FN (cfun)
-	    && bitmap_set_bit (bb_with, e->dest->index))
+	    && bitmap_set_bit_result (bb_with, e->dest->index))
 	  vec.quick_push (e->dest);
     }
 
@@ -855,7 +855,7 @@ try_shrink_wrapping (edge *entry_edge, rtx_insn *prologue_seq)
 	  if (!dominated_by_p (CDI_POST_DOMINATORS, pre, pro))
 	    break;
 
-	  if (bitmap_set_bit (bb_tmp, pre->index))
+	  if (bitmap_set_bit_result (bb_tmp, pre->index))
 	    vec.quick_push (pre);
 
 	  bool ok = true;
@@ -869,7 +869,7 @@ try_shrink_wrapping (edge *entry_edge, rtx_insn *prologue_seq)
 
 	      basic_block bb = vec.pop ();
 	      FOR_EACH_EDGE (e, ei, bb->succs)
-		if (bitmap_set_bit (bb_tmp, e->dest->index))
+		if (bitmap_set_bit_result (bb_tmp, e->dest->index))
 		  vec.quick_push (e->dest);
 	    }
 
@@ -1321,7 +1321,7 @@ spread_components (sbitmap components)
 
       if (!bitmap_equal_p (old, SW (bb)->head_components))
 	FOR_EACH_EDGE (e, ei, bb->succs)
-	  if (bitmap_set_bit (seen, e->dest->index))
+	  if (bitmap_set_bit_result (seen, e->dest->index))
 	    todo.quick_push (e->dest);
 
       bitmap_clear_bit (seen, bb->index);
@@ -1352,7 +1352,7 @@ spread_components (sbitmap components)
 
       if (!bitmap_empty_p (SW (bb)->tail_components))
 	FOR_EACH_EDGE (e, ei, bb->preds)
-	  if (bitmap_set_bit (seen, e->src->index))
+	  if (bitmap_set_bit_result (seen, e->src->index))
 	    todo.quick_push (e->src);
 
       bitmap_clear (SW (bb)->tail_components);
@@ -1386,7 +1386,7 @@ spread_components (sbitmap components)
 
       if (!bitmap_equal_p (old, SW (bb)->tail_components))
 	FOR_EACH_EDGE (e, ei, bb->preds)
-	  if (bitmap_set_bit (seen, e->src->index))
+	  if (bitmap_set_bit_result (seen, e->src->index))
 	    todo.quick_push (e->src);
 
       bitmap_clear_bit (seen, bb->index);

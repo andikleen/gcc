@@ -2704,7 +2704,7 @@ dump_nested_type (pretty_printer *pp, tree field, tree t, int spc)
 
     case ARRAY_TYPE:
       /* Anonymous array types are shared.  */
-      if (!bitmap_set_bit (dumped_anonymous_types, TYPE_UID (field_type)))
+      if (!bitmap_set_bit_result (dumped_anonymous_types, TYPE_UID (field_type)))
 	return;
 
       tmp = strip_array_types (field_type);

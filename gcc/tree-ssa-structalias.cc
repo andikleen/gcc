@@ -1019,7 +1019,7 @@ set_union_with_increment  (bitmap to, bitmap delta, HOST_WIDE_INT inc,
   /* If the solution of DELTA contains anything it is good enough to transfer
      this to TO.  */
   if (bitmap_bit_p (delta, anything_id))
-    return bitmap_set_bit (to, anything_id);
+    return bitmap_set_bit_result (to, anything_id);
 
   /* If the offset is unknown we have to expand the solution to
      all subfields.  */
@@ -1040,7 +1040,7 @@ set_union_with_increment  (bitmap to, bitmap delta, HOST_WIDE_INT inc,
       if (vi->is_artificial_var
 	  || vi->is_unknown_size_var
 	  || vi->is_full_var)
-	changed |= bitmap_set_bit (to, i);
+	changed |= bitmap_set_bit_result (to, i);
       else
 	{
 	  HOST_WIDE_INT fieldoffset = vi->offset + inc;
@@ -1055,7 +1055,7 @@ set_union_with_increment  (bitmap to, bitmap delta, HOST_WIDE_INT inc,
 
 	  do
 	    {
-	      changed |= bitmap_set_bit (to, vi->id);
+	      changed |= bitmap_set_bit_result (to, vi->id);
 	      if (vi->is_full_var
 		  || vi->next == 0)
 		break;
@@ -1177,7 +1177,7 @@ add_implicit_graph_edge (constraint_graph_t graph, unsigned int to,
   if (!graph->implicit_preds[to])
     graph->implicit_preds[to] = BITMAP_ALLOC (&predbitmap_obstack);
 
-  if (bitmap_set_bit (graph->implicit_preds[to], from))
+  if (bitmap_set_bit_result (graph->implicit_preds[to], from))
     stats.num_implicit_edges++;
 }
 
@@ -1231,7 +1231,7 @@ add_graph_edge (constraint_graph_t graph, unsigned int to,
 	  return false;
 	}
 
-      if (bitmap_set_bit (graph->succs[from], to))
+      if (bitmap_set_bit_result (graph->succs[from], to))
 	{
 	  r = true;
 	  if (to < FIRST_REF_NODE && from < FIRST_REF_NODE)
@@ -1581,7 +1581,7 @@ unify_nodes (constraint_graph_t graph, unsigned int to, unsigned int from,
      as changed, decrease the changed count.  */
 
   if (update_changed
-      && bitmap_clear_bit (changed, from))
+      && bitmap_clear_bit_result (changed, from))
     bitmap_set_bit (changed, to);
   varinfo_t fromvi = get_varinfo (from);
   if (fromvi->solution)
@@ -1622,7 +1622,7 @@ solve_add_graph_edge (constraint_graph_t graph, unsigned int to,
   /* Merging the solution from ESCAPED needlessly increases
      the set.  Use ESCAPED as representative instead.  */
   else if (from == find (escaped_id))
-    return bitmap_set_bit (get_varinfo (to)->solution, escaped_id);
+    return bitmap_set_bit_result (get_varinfo (to)->solution, escaped_id);
   else if (get_varinfo (from)->may_have_pointers
 	   && add_graph_edge (graph, to, from))
     return bitmap_ior_into (get_varinfo (to)->solution,
@@ -1651,7 +1651,7 @@ do_sd_constraint (constraint_graph_t graph, constraint_t c,
      this to the LHS.  */
   if (bitmap_bit_p (delta, anything_id))
     {
-      flag |= bitmap_set_bit (sol, anything_id);
+      flag |= bitmap_set_bit_result (sol, anything_id);
       goto done;
     }
 
@@ -2804,7 +2804,7 @@ solve_graph (constraint_graph_t graph)
 	     make sure to iterate immediately because that maximizes
 	     cache reuse and expands the graph quickest, leading to
 	     better visitation order in the next iteration.  */
-	  while (bitmap_clear_bit (changed, i))
+	  while (bitmap_clear_bit_result (changed, i))
 	    {
 	      unsigned int j;
 	      constraint_t c;
@@ -2887,7 +2887,7 @@ solve_graph (constraint_graph_t graph)
 			  /* Update the succ graph, avoiding duplicate
 			     work.  */
 			  to_remove = j;
-			  if (! bitmap_set_bit (graph->succs[i], to))
+			  if (! bitmap_set_bit_result (graph->succs[i], to))
 			    continue;
 			  /* We eventually end up processing 'to' twice
 			     as it is undefined whether bitmap iteration
@@ -2905,7 +2905,7 @@ solve_graph (constraint_graph_t graph)
 		      if (i == eff_escaped_id)
 			{
 			  to_remove = j;
-			  if (bitmap_set_bit (get_varinfo (to)->solution,
+			  if (bitmap_set_bit_result (get_varinfo (to)->solution,
 					      escaped_id))
 			    bitmap_set_bit (changed, to);
 			  continue;

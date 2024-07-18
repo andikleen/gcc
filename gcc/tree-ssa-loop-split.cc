@@ -916,7 +916,7 @@ find_vdef_in_loop (struct loop *loop)
 	    {
 	      tree arg = gimple_phi_arg_def (stmt, i);
 
-	      if (bitmap_set_bit (visited, SSA_NAME_VERSION (arg)))
+	      if (bitmap_set_bit_result (visited, SSA_NAME_VERSION (arg)))
 		worklist.safe_push (arg);
 	    }
 	}
@@ -933,7 +933,7 @@ find_vdef_in_loop (struct loop *loop)
 	  else
 	    other_stores.safe_push (stmt);
 
-	  if (bitmap_set_bit (visited, SSA_NAME_VERSION (prev)))
+	  if (bitmap_set_bit_result (visited, SSA_NAME_VERSION (prev)))
 	    worklist.safe_push (prev);
 	}
     } while (!worklist.is_empty ());

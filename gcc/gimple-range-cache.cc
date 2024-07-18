@@ -724,7 +724,7 @@ bool
 ssa_lazy_cache::set_range (tree name, const vrange &r)
 {
   unsigned v = SSA_NAME_VERSION (name);
-  if (!bitmap_set_bit (active_p, v))
+  if (!bitmap_set_bit_result (active_p, v))
     {
       // There is already an entry, simply set it.
       gcc_checking_assert (v < m_tab.length ());
@@ -743,7 +743,7 @@ bool
 ssa_lazy_cache::merge_range (tree name, const vrange &r)
 {
   unsigned v = SSA_NAME_VERSION (name);
-  if (!bitmap_set_bit (active_p, v))
+  if (!bitmap_set_bit_result (active_p, v))
     {
       // There is already an entry, simply merge it.
       gcc_checking_assert (v < m_tab.length ());

@@ -1538,7 +1538,7 @@ set_ref_stored_in_loop (im_mem_ref *ref, class loop *loop)
 {
   if (!ref->stored)
     ref->stored = BITMAP_ALLOC (&lim_bitmap_obstack);
-  return bitmap_set_bit (ref->stored, loop->num);
+  return bitmap_set_bit_result (ref->stored, loop->num);
 }
 
 /* Marks reference REF as stored in LOOP.  */
@@ -1559,7 +1559,7 @@ set_ref_loaded_in_loop (im_mem_ref *ref, class loop *loop)
 {
   if (!ref->loaded)
     ref->loaded = BITMAP_ALLOC (&lim_bitmap_obstack);
-  return bitmap_set_bit (ref->loaded, loop->num);
+  return bitmap_set_bit_result (ref->loaded, loop->num);
 }
 
 /* Marks reference REF as loaded in LOOP.  */
@@ -2700,7 +2700,7 @@ sm_seq_valid_bb (class loop *loop, basic_block bb, tree vdef,
 	  return 1;
 	}
       /* One of the stores we want to apply SM to and we've not yet seen.  */
-      else if (bitmap_clear_bit (refs_not_in_seq, data->ref))
+      else if (bitmap_clear_bit_result (refs_not_in_seq, data->ref))
 	{
 	  seq.safe_push (seq_entry (data->ref, sm_ord));
 
@@ -2963,7 +2963,7 @@ hoist_memory_references (class loop *loop, bitmap mem_refs,
 		     following refs.  */
 		  if (kind == sm_ord)
 		    {
-		      if (bitmap_set_bit (refs_not_supported, id))
+		      if (bitmap_set_bit_result (refs_not_supported, id))
 			changed = true;
 		      seq->second[new_idx].second = sm_other;
 		    }
@@ -2972,7 +2972,7 @@ hoist_memory_references (class loop *loop, bitmap mem_refs,
 		      for (unsigned j = seq->second.length () - 1;
 			   j > new_idx; --j)
 			if (seq->second[j].second == sm_ord
-			    && bitmap_set_bit (refs_not_supported,
+			    && bitmap_set_bit_result (refs_not_supported,
 					       seq->second[j].first))
 			  changed = true;
 		      seq->second.truncate (new_idx);
@@ -2993,7 +2993,7 @@ hoist_memory_references (class loop *loop, bitmap mem_refs,
       auto_bitmap seen (&lim_bitmap_obstack);
       unsigned j, k;
       for (j = k = 0; j < seq->second.length (); ++j)
-	if (bitmap_set_bit (seen, seq->second[j].first))
+	if (bitmap_set_bit_result (seen, seq->second[j].first))
 	  {
 	    if (k != j)
 	      seq->second[k] = seq->second[j];

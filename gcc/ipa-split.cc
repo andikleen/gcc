@@ -237,7 +237,7 @@ verify_non_ssa_vars (class split_point *current, bitmap non_ssa_vars,
       bb = worklist.pop ();
       FOR_EACH_EDGE (e, ei, bb->preds)
 	if (e->src != ENTRY_BLOCK_PTR_FOR_FN (cfun)
-	    && bitmap_set_bit (seen, e->src->index))
+	    && bitmap_set_bit_result (seen, e->src->index))
 	  {
 	    gcc_checking_assert (!bitmap_bit_p (current->split_bbs,
 					        e->src->index));

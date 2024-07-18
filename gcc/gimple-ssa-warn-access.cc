@@ -3864,7 +3864,7 @@ pass_waccess::use_after_inval_p (gimple *inval_stmt, gimple *use_stmt,
       return bb == EXIT_BLOCK_PTR_FOR_FN (cfun);
     }
 
-  if (bitmap_set_bit (m_bb_uids_set, inval_bb->index))
+  if (bitmap_set_bit_result (m_bb_uids_set, inval_bb->index))
     /* The first time this basic block is visited assign increasing ids
        to consecutive statements in it.  Use the ids to determine which
        precedes which.  This avoids the linear traversal on subsequent
@@ -4127,7 +4127,7 @@ pointers_related_p (gimple *stmt, tree p, tree q, pointer_query &qry,
       version = SSA_NAME_VERSION (qref.ref);
     }
 
-  if (!bitmap_set_bit (visited, version))
+  if (!bitmap_set_bit_result (visited, version))
     return true;
 
   unsigned nargs = gimple_phi_num_args (phi);
@@ -4185,7 +4185,7 @@ pass_waccess::check_pointer_uses (gimple *stmt, tree ptr,
   for (unsigned i = 0; i != pointers.length (); ++i)
     {
       tree ptr = pointers[i];
-      if (!bitmap_set_bit (visited, SSA_NAME_VERSION (ptr)))
+      if (!bitmap_set_bit_result (visited, SSA_NAME_VERSION (ptr)))
 	/* Avoid revisiting the same pointer.  */
 	continue;
 
@@ -4637,7 +4637,7 @@ pass_waccess::check_dangling_stores ()
     {
       edge_iterator ei = worklist.last ();
       basic_block src = ei_edge (ei)->src;
-      if (bitmap_set_bit (bbs, src->index))
+      if (bitmap_set_bit_result (bbs, src->index))
 	{
 	  if (check_dangling_stores (src, stores)
 	      && EDGE_COUNT (src->preds) > 0)

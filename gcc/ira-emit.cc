@@ -649,7 +649,7 @@ change_loop (ira_loop_tree_node_t node)
       regno = ALLOCNO_REGNO (allocno);
       if (ALLOCNO_CAP_MEMBER (allocno) != NULL)
 	continue;
-      used_p = !bitmap_set_bit (used_regno_bitmap, regno);
+      used_p = !bitmap_set_bit_result (used_regno_bitmap, regno);
       ALLOCNO_EMIT_DATA (allocno)->somewhere_renamed_p = true;
       if (! used_p)
 	continue;

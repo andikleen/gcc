@@ -1565,7 +1565,7 @@ eliminate_unnecessary_stmts (bool aggressive)
 		 debug-bind stmts.  */
 	      tree var = gimple_debug_bind_get_var (stmt);
 	      if (TREE_CODE (var) != DEBUG_EXPR_DECL
-		  && !bitmap_set_bit (debug_seen, DECL_UID (var)))
+		  && !bitmap_set_bit_result (debug_seen, DECL_UID (var)))
 		remove_dead_stmt (&gsi, bb, to_remove_edges);
 	      continue;
 	    }

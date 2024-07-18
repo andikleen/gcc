@@ -1881,7 +1881,7 @@ get_range_strlen (tree arg, bitmap visited,
     return false;
 
   /* If we were already here, break the infinite cycle.  */
-  if (!bitmap_set_bit (visited, SSA_NAME_VERSION (arg)))
+  if (!bitmap_set_bit_result (visited, SSA_NAME_VERSION (arg)))
     return true;
 
   tree var = arg;

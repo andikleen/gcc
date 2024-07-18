@@ -1385,7 +1385,7 @@ ssa_name_limit_t::visit_phi (tree ssa_name)
     visited = BITMAP_ALLOC (NULL);
 
   /* Return false if SSA_NAME has already been visited.  */
-  return bitmap_set_bit (visited, SSA_NAME_VERSION (ssa_name));
+  return bitmap_set_bit_result (visited, SSA_NAME_VERSION (ssa_name));
 }
 
 /* Clear a bit for the PHI in VISITED.  */
