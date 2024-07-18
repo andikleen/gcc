@@ -6427,14 +6427,13 @@ check_array_designated_initializer (constructor_elt *ce,
 	  && (TREE_CODE (ce_index = fold_non_dependent_expr (ce_index))
 	      == INTEGER_CST))
 	{
-	  /* A C99 designator is OK if it matches the current index.  */
-	  if (wi::to_wide (ce_index) == index)
+	  if (wi::to_wide (ce_index) >= wi::to_wide (size_int (index)))
 	    {
 	      ce->index = ce_index;
 	      return true;
 	    }
 	  else
-	    sorry ("non-trivial designated initializers not supported");
+	    sorry ("non-sorted designated initializers not supported");
 	}
       else
 	error_at (cp_expr_loc_or_input_loc (ce->index),
@@ -6907,7 +6906,7 @@ reshape_init_array_1 (tree elt_type, tree max_index, reshape_iter *d,
 				 complain);
       if (elt_init == error_mark_node)
 	return error_mark_node;
-      tree idx = size_int (index);
+      tree idx = size_int (d->cur->index);
       if (reuse)
 	{
 	  old_cur->index = idx;
