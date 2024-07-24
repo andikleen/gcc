@@ -5675,7 +5675,7 @@ extern void add_expr (const_tree, hash &, unsigned int = 0);
 
 /* Compat version until all callers are converted. Return hash for
    TREE with SEED.  */
-inline hashval_t iterative_hash_expr(const_tree tree, hashval_t seed)
+inline ihashval_t iterative_hash_expr(const_tree tree, ihashval_t seed)
 {
   inchash::hash hstate (seed);
   inchash::add_expr (tree, hstate);
