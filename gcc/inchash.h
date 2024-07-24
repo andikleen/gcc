@@ -20,16 +20,21 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef INCHASH_H
 #define INCHASH_H 1
 
-
 /* This file implements an incremential hash function ADT, to be used
    by code that incrementially hashes a lot of unrelated data
    (not in a single memory block) into a single value. The goal
-   is to make it easy to plug in efficient hash algorithms.
-   Currently it just implements the plain old jhash based
-   incremental hash from gcc's tree.cc.  */
+   is to make it easy to plug in efficient hash algorithms.  */
 
-hashval_t iterative_hash_host_wide_int (HOST_WIDE_INT, hashval_t);
-hashval_t iterative_hash_hashval_t (hashval_t, hashval_t);
+#if __SIZEOF_SIZE_T__ == 8
+#include "rapidhash.h"
+
+typedef uint64_t ihashval_t;
+#else
+typedef uint32_t ihashval_t;
+#endif
+
+ihashval_t iterative_hash_host_wide_int (HOST_WIDE_INT, ihashval_t);
+ihashval_t iterative_hash_hashval_t (ihashval_t, ihashval_t);
 
 namespace inchash
 {
@@ -39,7 +44,7 @@ class hash
  public:
 
   /* Start incremential hashing, optionally with SEED.  */
-  hash (hashval_t seed = 0)
+  hash (ihashval_t seed = rapidhash::default_seed)
   {
     val = seed;
     bits = 0;
@@ -151,7 +156,7 @@ class hash
   }
 
  private:
-  hashval_t val;
+  ihashval_t val = rapidhash::default_seed;
   unsigned bits;
 };
 
@@ -171,25 +176,35 @@ class hash
   c -= a; c -= b; c = (c ^ (b>>15)) & 0xffffffff; \
 }
 
+/* Some callers use plain hashval_t, that will lose some bits.  */
 
 /* Produce good hash value combining VAL and VAL2.  */
 inline
-hashval_t
-iterative_hash_hashval_t (hashval_t val, hashval_t val2)
+ihashval_t
+iterative_hash_hashval_t (ihashval_t val, ihashval_t val2)
 {
+#if __SIZEOF_SIZE_T__ == 8
+  /* Some callers use unhashed values for val. Better run a full hash?  */
+  return rapidhash::merge (val, val2);
+#else
   /* the golden ratio; an arbitrary value.  */
   hashval_t a = 0x9e3779b9;
 
   mix (a, val, val2);
   return val2;
+#endif  
 }
 
 /* Produce good hash value combining VAL and VAL2.  */
 
 inline
-hashval_t
-iterative_hash_host_wide_int (HOST_WIDE_INT val, hashval_t val2)
+ihashval_t
+iterative_hash_host_wide_int (HOST_WIDE_INT val, ihashval_t val2)
 {
+#if __SIZEOF_SIZE_T__ == 8
+  /* Some callers use unhashed values for val. Better run a full hash?  */
+  return rapidhash::merge (val, val2);
+#else
   if (sizeof (HOST_WIDE_INT) == sizeof (hashval_t))
     return iterative_hash_hashval_t (val, val2);
   else
@@ -208,6 +223,7 @@ iterative_hash_host_wide_int (HOST_WIDE_INT val, hashval_t val2)
 	}
       return val2;
     }
+#endif
 }
 
 #endif
