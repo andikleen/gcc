@@ -2092,6 +2092,55 @@ call_from_call_insn (rtx_call_insn *insn)
   return x;
 }
 
+#define MAXREGLEN 16
+
+// XXX need to get clobbers too and location
+
+static void
+check_asm (const char *s, rtx *ops, clobbers)
+{
+  // check if target has % registers
+  // check if warnings are active?
+
+  while (*s)
+    {
+      const char *p;
+
+      if (*s == '%' && s[1] == '%')
+	{
+	  char regbuf[MAXREGLEN];
+	  int n;
+
+	  n = 0;
+	  for (p = s + 2; (ISALPHA (*p) || ISDIGIT (*p)) && n < MAXREGLEN-1; p++)
+	    regbuf[n++] = *p;
+	  regbuf[n] = 0;
+
+	  int nregs;
+	  int reg = decode_reg_name_and_count (regbuf, &nregs);
+	  if (reg < 0)
+	    {
+	      s++;
+	      continue;
+	    }
+
+	  for (int k = 0; k < insn_noperands; k++)
+	    // if operand has fixed register
+	    // check against it
+	    {}
+
+	  // check against clobbers
+    }
+
+  // scan s for %%[a-zA-Z][A-Za-z0-9]+
+  // run register through decode_reg_name_and_count
+  // check against clobbers
+  // if not mentioned
+  // check if ever alive: output warning 1
+  // check if stack: output warning 2
+  // check if may be used by caller: output warning 3
+}
+
 /* Print a comment into the asm showing FILENAME, LINENUM, and the
    corresponding source line, if available.  */
 
@@ -2589,6 +2638,8 @@ final_scan_insn_1 (rtx_insn *insn, FILE *file, int optimize_p ATTRIBUTE_UNUSED,
 	      {
 		expanded_location loc;
 
+		check_asm (string, NULL);
+
 		app_enable ();
 		loc = expand_location (ASM_INPUT_SOURCE_LOCATION (body));
 		if (*loc.file && loc.line)
@@ -2629,6 +2680,8 @@ final_scan_insn_1 (rtx_insn *insn, FILE *file, int optimize_p ATTRIBUTE_UNUSED,
 	    /* Output the insn using them.  */
 	    if (string[0])
 	      {
+		check_asm (string, ops);
+
 		app_enable ();
 		if (expanded.file && expanded.line)
 		  fprintf (asm_out_file, "%s %i \"%s\" 1\n",
@@ -3471,6 +3524,9 @@ output_asm_insn (const char *templ, rtx *operands)
 	    )
 	  {
 	    putc (*p, asm_out_file);
+
+
+
 	    p++;
 	  }
 	/* %= outputs a number which is unique to each insn in the entire
