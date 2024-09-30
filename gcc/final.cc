@@ -2094,6 +2094,9 @@ call_from_call_insn (rtx_call_insn *insn)
 
 #define MAXREGLEN 16
 
+/* Do some basic verification on inline asm. Find all referenced registers
+   and check if they are declared as clobber or input/output.  */
+
 // XXX need to get clobbers too and location
 
 static void
