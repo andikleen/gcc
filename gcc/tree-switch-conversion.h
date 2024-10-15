@@ -442,7 +442,7 @@ public:
   /* Return whether bit test expansion is allowed.  */
   static inline bool is_enabled (void)
   {
-    return flag_bit_tests;
+    return flag_bit_tests >= 0 ? flag_bit_tests : (optimize >= 1);
   }
 
   /* True when the jump table handles an entire switch statement.  */
@@ -524,7 +524,8 @@ bool jump_table_cluster::is_enabled (void)
      over-ruled us, we really have no choice.  */
   if (!targetm.have_casesi () && !targetm.have_tablejump ())
     return false;
-  if (!flag_jump_tables)
+  int flag = flag_jump_tables >= 0 ? flag_jump_tables : (optimize >= 1);
+  if (!flag)
     return false;
 #ifndef ASM_OUTPUT_ADDR_DIFF_ELT
   if (flag_pic)
