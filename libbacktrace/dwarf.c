@@ -234,6 +234,8 @@ struct line
   const char *filename;
   /* Line number.  */
   int lineno;
+  /* Discriminator.  */
+  int disc;
   /* Index of the object in the original array read from the DWARF
      section, before it has been sorted.  The index makes it possible
      to use Quicksort and maintain stability.  */
@@ -263,6 +265,8 @@ struct function
   /* If this is an inlined function, the line number of the call
      site.  */
   int caller_lineno;
+  /* Dito for the discriminator.  */
+  int caller_disc;
   /* Map PC ranges to inlined functions.  */
   struct function_addrs *function_addrs;
   size_t function_addrs_count;
@@ -2484,7 +2488,7 @@ build_address_map (struct backtrace_state *state,
 
 static int
 add_line (struct backtrace_state *state, struct dwarf_data *ddata,
-	  uintptr_t pc, const char *filename, int lineno,
+	  uintptr_t pc, const char *filename, int lineno, int disc,
 	  backtrace_error_callback error_callback, void *data,
 	  struct line_vector *vec)
 {
@@ -2495,7 +2499,8 @@ add_line (struct backtrace_state *state, struct dwarf_data *ddata,
   if (vec->count > 0)
     {
       ln = (struct line *) vec->vec.base + (vec->count - 1);
-      if (pc == ln->pc && filename == ln->filename && lineno == ln->lineno)
+      if (pc == ln->pc && filename == ln->filename && lineno == ln->lineno
+	  && ln->disc == disc)
 	return 1;
     }
 
@@ -2511,6 +2516,7 @@ add_line (struct backtrace_state *state, struct dwarf_data *ddata,
 
   ln->filename = filename;
   ln->lineno = lineno;
+  ln->disc = disc;
   ln->idx = vec->count;
 
   ++vec->count;
@@ -2929,6 +2935,7 @@ read_line_program (struct backtrace_state *state, struct dwarf_data *ddata,
   const char *reset_filename;
   const char *filename;
   int lineno;
+  int disc = 0;
 
   address = 0;
   op_index = 0;
@@ -2954,7 +2961,7 @@ read_line_program (struct backtrace_state *state, struct dwarf_data *ddata,
 		      / hdr->max_ops_per_insn);
 	  op_index = (op_index + advance) % hdr->max_ops_per_insn;
 	  lineno += hdr->line_base + (int) (op % hdr->line_range);
-	  add_line (state, ddata, address, filename, lineno,
+	  add_line (state, ddata, address, filename, lineno, disc,
 		    line_buf->error_callback, line_buf->data, vec);
 	}
       else if (op == DW_LNS_extended_op)
@@ -3028,8 +3035,7 @@ read_line_program (struct backtrace_state *state, struct dwarf_data *ddata,
 	      }
 	      break;
 	    case DW_LNE_set_discriminator:
-	      /* We don't care about discriminators.  */
-	      read_uleb128 (line_buf);
+	      disc = read_uleb128 (line_buf);
 	      break;
 	    default:
 	      if (!advance (line_buf, len - 1))
@@ -3042,8 +3048,9 @@ read_line_program (struct backtrace_state *state, struct dwarf_data *ddata,
 	  switch (op)
 	    {
 	    case DW_LNS_copy:
-	      add_line (state, ddata, address, filename, lineno,
+	      add_line (state, ddata, address, filename, lineno, disc,
 			line_buf->error_callback, line_buf->data, vec);
+	      disc = 0;
 	      break;
 	    case DW_LNS_advance_pc:
 	      {
@@ -3183,6 +3190,7 @@ read_line_info (struct backtrace_state *state, struct dwarf_data *ddata,
   ln->pc = (uintptr_t) -1;
   ln->filename = NULL;
   ln->lineno = 0;
+  ln->disc = 0;
   ln->idx = 0;
 
   if (!backtrace_vector_release (state, &vec.vec, error_callback, data))
@@ -3517,6 +3525,11 @@ read_function_entry (struct backtrace_state *state, struct dwarf_data *ddata,
 		    function->caller_lineno = val.u.uint;
 		  break;
 
+		case DW_AT_GNU_discriminator:
+		  if (val.encoding == ATTR_VAL_UINT)
+		    function->caller_disc = val.u.uint;
+		  break;
+
 		case DW_AT_abstract_origin:
 		case DW_AT_specification:
 		  /* Second name preference: override DW_AT_name, don't override
@@ -3752,13 +3765,14 @@ read_function_info (struct backtrace_state *state, struct dwarf_data *ddata,
 }
 
 /* See if PC is inlined in FUNCTION.  If it is, print out the inlined
-   information, and update FILENAME and LINENO for the caller.
+   information, and update FILENAME and LINENO and DISC for the caller.
    Returns whatever CALLBACK returns, or 0 to keep going.  */
 
 static int
 report_inlined_functions (uintptr_t pc, struct function *function,
-			  backtrace_full_callback callback, void *data,
-			  const char **filename, int *lineno)
+			  backtrace_full_disc_callback callback, void *data,
+			  const char **filename, int *lineno,
+			  int *disc)
 {
   struct function_addrs *p;
   struct function_addrs *match;
@@ -3811,12 +3825,12 @@ report_inlined_functions (uintptr_t pc, struct function *function,
 
   /* Report any calls inlined into this one.  */
   ret = report_inlined_functions (pc, inlined, callback, data,
-				  filename, lineno);
+				  filename, lineno, disc);
   if (ret != 0)
     return ret;
 
   /* Report this inlined call.  */
-  ret = callback (data, pc, *filename, *lineno, inlined->name);
+  ret = callback (data, pc, *filename, *lineno, inlined->name, *disc);
   if (ret != 0)
     return ret;
 
@@ -3824,6 +3838,7 @@ report_inlined_functions (uintptr_t pc, struct function *function,
      it the appropriate filename and line number.  */
   *filename = inlined->caller_filename;
   *lineno = inlined->caller_lineno;
+  *disc = inlined->caller_disc;
 
   return 0;
 }
@@ -3835,7 +3850,7 @@ report_inlined_functions (uintptr_t pc, struct function *function,
 
 static int
 dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
-		 uintptr_t pc, backtrace_full_callback callback,
+		 uintptr_t pc, backtrace_full_disc_callback callback,
 		 backtrace_error_callback error_callback, void *data,
 		 int *found)
 {
@@ -3850,6 +3865,7 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
   struct function *function;
   const char *filename;
   int lineno;
+  int disc = 0;
   int ret;
 
   *found = 1;
@@ -3991,7 +4007,7 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
       if (new_data)
 	return dwarf_lookup_pc (state, ddata, pc, callback, error_callback,
 				data, found);
-      return callback (data, pc, NULL, 0, NULL);
+      return callback (data, pc, NULL, 0, NULL, 0);
     }
 
   /* Search for PC within this unit.  */
@@ -4038,13 +4054,13 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
 	  entry->u->abs_filename = filename;
 	}
 
-      return callback (data, pc, entry->u->abs_filename, 0, NULL);
+      return callback (data, pc, entry->u->abs_filename, 0, NULL, 0);
     }
 
   /* Search for function name within this unit.  */
 
   if (entry->u->function_addrs_count == 0)
-    return callback (data, pc, ln->filename, ln->lineno, NULL);
+    return callback (data, pc, ln->filename, ln->lineno, NULL, ln->disc);
 
   p = ((struct function_addrs *)
        bsearch (&pc, entry->u->function_addrs,
@@ -4052,7 +4068,7 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
 		sizeof (struct function_addrs),
 		function_addrs_search));
   if (p == NULL)
-    return callback (data, pc, ln->filename, ln->lineno, NULL);
+    return callback (data, pc, ln->filename, ln->lineno, NULL, ln->disc);
 
   /* Here pc >= p->low && pc < (p + 1)->low.  The function_addrs are
      sorted by low, so if pc > p->low we are at the end of a range of
@@ -4076,19 +4092,20 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
       --p;
     }
   if (fmatch == NULL)
-    return callback (data, pc, ln->filename, ln->lineno, NULL);
+    return callback (data, pc, ln->filename, ln->lineno, NULL, ln->disc);
 
   function = fmatch->function;
 
   filename = ln->filename;
   lineno = ln->lineno;
+  disc = ln->disc;
 
   ret = report_inlined_functions (pc, function, callback, data,
-				  &filename, &lineno);
+				  &filename, &lineno, &disc);
   if (ret != 0)
     return ret;
 
-  return callback (data, pc, filename, lineno, function->name);
+  return callback (data, pc, filename, lineno, function->name, disc);
 }
 
 
@@ -4097,7 +4114,7 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
 
 static int
 dwarf_fileline (struct backtrace_state *state, uintptr_t pc,
-		backtrace_full_callback callback,
+		backtrace_full_disc_callback callback,
 		backtrace_error_callback error_callback, void *data)
 {
   struct dwarf_data *ddata;
@@ -4138,7 +4155,7 @@ dwarf_fileline (struct backtrace_state *state, uintptr_t pc,
 
   /* FIXME: See if any libraries have been dlopen'ed.  */
 
-  return callback (data, pc, NULL, 0, NULL);
+  return callback (data, pc, NULL, 0, NULL, 0);
 }
 
 /* Initialize our data structures from the DWARF debug info for a
