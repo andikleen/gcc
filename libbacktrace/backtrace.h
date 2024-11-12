@@ -114,6 +114,13 @@ extern struct backtrace_state *backtrace_create_state (
    continuing tracing.  The FILENAME and FUNCTION buffers may become
    invalid after this function returns.  */
 
+/* This version of the callback also passes the discriminator as last
+   argument. It should be used with backtrace_pcinfo_disc.  */
+typedef int (*backtrace_full_disc_callback) (void *data, uintptr_t pc,
+					const char *filename, int lineno,
+					const char *function,
+					int disc);
+
 typedef int (*backtrace_full_callback) (void *data, uintptr_t pc,
 					const char *filename, int lineno,
 					const char *function);
@@ -170,6 +177,14 @@ extern void backtrace_print (struct backtrace_state *state, int skip, FILE *);
 
 extern int backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
 			     backtrace_full_callback callback,
+			     backtrace_error_callback error_callback,
+			     void *data);
+
+/* Similar to backtrace_pcinfo, but the full callback also gets the discriminator
+   passed as last argument.  */
+
+extern int backtrace_pcinfo_disc (struct backtrace_state *state, uintptr_t pc,
+			     backtrace_full_disc_callback callback,
 			     backtrace_error_callback error_callback,
 			     void *data);
 
