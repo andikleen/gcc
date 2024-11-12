@@ -41,12 +41,12 @@ POSSIBILITY OF SUCH DAMAGE.  */
 
 static int
 unknown_fileline (struct backtrace_state *state ATTRIBUTE_UNUSED,
-		  uintptr_t pc, backtrace_full_callback callback,
+		  uintptr_t pc, backtrace_full_extra_callback callback,
 		  backtrace_error_callback error_callback ATTRIBUTE_UNUSED,
 		  void *data)
 
 {
-  return callback (data, pc, NULL, 0, NULL);
+  return callback (data, pc, NULL, 0, NULL, &backtrace_extra_empty);
 }
 
 /* Initialize the backtrace data when we don't know how to read the

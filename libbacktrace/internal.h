@@ -125,7 +125,7 @@ extern void backtrace_atomic_store_int (int *, int);
    is like backtrace_pcinfo.  */
 
 typedef int (*fileline) (struct backtrace_state *state, uintptr_t pc,
-			 backtrace_full_callback callback,
+			 backtrace_full_extra_callback callback,
 			 backtrace_error_callback error_callback, void *data);
 
 /* The type of the function that collects symbol information.  This is
@@ -377,14 +377,14 @@ extern int backtrace_dwarf_add (struct backtrace_state *state,
 
 struct backtrace_call_full
 {
-  backtrace_full_callback full_callback;
+  backtrace_full_extra_callback full_callback;
   backtrace_error_callback full_error_callback;
   void *full_data;
   int ret;
 };
 
 /* A backtrace_syminfo_callback that can call into a
-   backtrace_full_callback, used when we have a symbol table but no
+   backtrace_full_extra_callback, used when we have a symbol table but no
    debug info.  */
 
 extern void backtrace_syminfo_to_full_callback (void *data, uintptr_t pc,
@@ -424,5 +424,7 @@ extern int backtrace_uncompress_lzma (struct backtrace_state *,
 				      backtrace_error_callback, void *data,
 				      unsigned char **uncompressed,
 				      size_t *uncompressed_size);
+/* An empty backtrace_extra.  */
+extern struct backtrace_extra backtrace_extra_empty;
 
 #endif
