@@ -324,7 +324,7 @@ static int macho_add (struct backtrace_state *, const char *, int, off_t,
 static int
 macho_nodebug (struct backtrace_state *state ATTRIBUTE_UNUSED,
 	       uintptr_t pc ATTRIBUTE_UNUSED,
-	       backtrace_full_callback callback ATTRIBUTE_UNUSED,
+	       backtrace_full_disc_callback callback ATTRIBUTE_UNUSED,
 	       backtrace_error_callback error_callback, void *data)
 {
   error_callback (data, "no debug info in Mach-O executable (make sure to compile with -g; may need to run dsymutil)", -1);

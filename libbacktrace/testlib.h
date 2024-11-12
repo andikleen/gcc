@@ -98,7 +98,7 @@ extern const char *base (const char *p);
 extern void check (const char *name, int index, const struct info *all,
 		   int want_lineno, const char *want_function,
 		   const char *want_file, int *failed);
-extern int callback_one (void *, uintptr_t, const char *, int, const char *);
+extern int callback_one (void *, uintptr_t, const char *, int, const char *, int);
 extern void error_callback_one (void *, const char *, int);
 extern int callback_two (void *, uintptr_t);
 extern void error_callback_two (void *, const char *, int);
