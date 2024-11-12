@@ -359,8 +359,30 @@ backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
   if (state->fileline_initialization_failed)
     return 0;
 
+  /* Just cast the callback because the addition of an argument at the end
+     is ABI compatible.  */
+  return state->fileline_fn (state, pc,
+			     (backtrace_full_disc_callback)(void (*)(void))callback,
+			     error_callback, data);
+}
+
+/* Given a PC, find the file name, line number, and function name.
+   This version has a full callback that passes the discriminator.  */
+
+int
+backtrace_pcinfo_disc (struct backtrace_state *state, uintptr_t pc,
+		  backtrace_full_disc_callback callback,
+		  backtrace_error_callback error_callback, void *data)
+{
+  if (!fileline_initialize (state, error_callback, data))
+    return 0;
+
+  if (state->fileline_initialization_failed)
+    return 0;
+
   return state->fileline_fn (state, pc, callback, error_callback, data);
 }
+
 
 /* Given a PC, find the symbol for it, and its value.  */
 
@@ -380,7 +402,7 @@ backtrace_syminfo (struct backtrace_state *state, uintptr_t pc,
 }
 
 /* A backtrace_syminfo_callback that can call into a
-   backtrace_full_callback, used when we have a symbol table but no
+   backtrace_full_disc_callback, used when we have a symbol table but no
    debug info.  */
 
 void
@@ -391,7 +413,7 @@ backtrace_syminfo_to_full_callback (void *data, uintptr_t pc,
 {
   struct backtrace_call_full *bdata = (struct backtrace_call_full *) data;
 
-  bdata->ret = bdata->full_callback (bdata->full_data, pc, NULL, 0, symname);
+  bdata->ret = bdata->full_callback (bdata->full_data, pc, NULL, 0, symname, 0);
 }
 
 /* An error callback that corresponds to

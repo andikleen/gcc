@@ -44,7 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.  */
 int
 backtrace_full (struct backtrace_state *state ATTRIBUTE_UNUSED,
 		int skip ATTRIBUTE_UNUSED,
-		backtrace_full_callback callback ATTRIBUTE_UNUSED,
+		backtrace_full_disc_callback callback ATTRIBUTE_UNUSED,
 		backtrace_error_callback error_callback, void *data)
 {
   error_callback (data,

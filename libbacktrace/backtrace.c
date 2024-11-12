@@ -49,7 +49,7 @@ struct backtrace_data
   /* Library state.  */
   struct backtrace_state *state;
   /* Callback routine.  */
-  backtrace_full_callback callback;
+  backtrace_full_disc_callback callback;
   /* Error callback routine.  */
   backtrace_error_callback error_callback;
   /* Data to pass to callback routines.  */
@@ -86,9 +86,9 @@ unwind (struct _Unwind_Context *context, void *vdata)
     --pc;
 
   if (!bdata->can_alloc)
-    bdata->ret = bdata->callback (bdata->data, pc, NULL, 0, NULL);
+    bdata->ret = bdata->callback (bdata->data, pc, NULL, 0, NULL, 0);
   else
-    bdata->ret = backtrace_pcinfo (bdata->state, pc, bdata->callback,
+    bdata->ret = backtrace_pcinfo_disc (bdata->state, pc, bdata->callback,
 				   bdata->error_callback, bdata->data);
   if (bdata->ret != 0)
     return _URC_END_OF_STACK;
@@ -108,7 +108,9 @@ backtrace_full (struct backtrace_state *state, int skip,
 
   bdata.skip = skip + 1;
   bdata.state = state;
-  bdata.callback = callback;
+  /* Assume backtrace_full_callback and backtrace_full_disc_callback
+     are ABI compatible.  */
+  bdata.callback = (backtrace_full_disc_callback)callback;
   bdata.error_callback = error_callback;
   bdata.data = data;
   bdata.ret = 0;
