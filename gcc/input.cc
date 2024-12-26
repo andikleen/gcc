@@ -843,26 +843,31 @@ file_cache_slot::get_next_line (char **line, ssize_t *line_len)
   /* Now update our line record so that re-reading lines from the
      before m_line_start_idx is faster.  */
   size_t rlen = m_line_record.length ();
-  size_t spacing = rlen >= 2 ?
-	  m_line_record[rlen - 1].line_num - m_line_record[rlen - 2].line_num : 1;
-  size_t delta = rlen >= 1 ? m_line_num - m_line_record[rlen - 1].line_num : 1;
-
-  /* If m_line_record is unbalanced, drop half of the lines.  */
-  if (rlen == line_record_size && delta >= spacing*2)
+  /* Only update when beyond the previously cached region.  */
+  if (rlen == 0 || m_line_record[rlen - 1].line_num < m_line_num)
     {
-      size_t j = 0;
-      for (size_t i = 1; i < rlen; i += 2)
-        m_line_record[j++] = m_line_record[i];
-      m_line_record.truncate (j);
-      rlen = j;
-      spacing *= 2;
-    }
+      size_t spacing = rlen >= 2 ?
+	m_line_record[rlen - 1].line_num - m_line_record[rlen - 2].line_num : 1;
+      size_t delta = rlen >= 1 ?
+	m_line_num - m_line_record[rlen - 1].line_num : 1;
 
-  if (rlen < line_record_size && delta >= spacing)
+      /* If we're too far beyond drop half of the lines to rebalance.  */
+      if (rlen == line_record_size && delta >= spacing*2)
+	{
+	  size_t j = 0;
+	  for (size_t i = 1; i < rlen; i += 2)
+	    m_line_record[j++] = m_line_record[i];
+	  m_line_record.truncate (j);
+	  rlen = j;
+	  spacing *= 2;
+	}
+
+      if (rlen < line_record_size && delta >= spacing)
 	m_line_record.safe_push
 	  (file_cache_slot::line_info (m_line_num,
 				       m_line_start_idx,
 				       line_end - m_data));
+    }
 
   /* Update m_line_start_idx so that it points to the next line to be
      read.  */
