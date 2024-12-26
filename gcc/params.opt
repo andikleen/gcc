@@ -139,7 +139,7 @@ Common Joined UInteger Var(param_file_cache_files) Init(16) Param
 Max number of files in the file cache.
 
 -param=file-cache-lines=
-Common Joined UInteger Var(param_file_cache_lines) Init(100) Param
+Common Joined UInteger Var(param_file_cache_lines) Init(0) Param
 Max number of lines to index into file cache.
 
 -param=fsm-scale-path-stmts=
