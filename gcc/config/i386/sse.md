@@ -32676,3 +32676,21 @@
    (set_attr "prefix" "evex")
    (set_attr "memory" "load")
    (set_attr "mode" "<sseinsnmode>")])
+
+;; TBD should only output SI, but need to fix middle end
+(define_expand "crc_rev<SWI1248x:mode><SWI124:mode>4"
+  [(match_operand:SWI124 0 "register_operand" "=r")
+   (match_operand:SWI124 1 "register_operand" "r")
+   (match_operand:SWI1248x 2 "register_operand" "r")
+   (match_operand:SWI124 3)]
+  ""
+  {
+    if (TARGET_CRC32 && INTVAL (operands[3]) == 0x1EDC6F41)
+      emit_insn (gen_sse4_2_crc32<SWI124:mode> (operands[0], operands[1],
+					 operands[2]));
+    else
+      expand_reversed_crc_table_based (operands[0], operands[1], operands[2],
+				       operands[3], <SWI1248x:MODE>mode,
+				       generate_reflecting_code_standard);
+    DONE;
+  })
