@@ -436,3 +436,9 @@ extern bool ix86_rpad_gate ();
 /* In i386-expand.cc.  */
 bool ix86_check_builtin_isa_match (unsigned int, HOST_WIDE_INT*,
 				   HOST_WIDE_INT*);
+void ix86_expand_reversed_crc_pclmulqdq (scalar_mode crc_mode,
+					 scalar_mode data_mode,
+					 rtx *operands);
+void ix86_expand_crc_pclmulqdq (scalar_mode crc_mode,
+				      scalar_mode data_mode,
+				      rtx *operands);
