@@ -26954,6 +26954,8 @@ ix86_expand_vector_bf2sf_with_vec_perm (rtx dest, rtx src)
   emit_move_insn (dest, lowpart_subreg (GET_MODE (dest), target, vperm_mode));
 }
 
+/* TBD: Add AVX support.  */
+
 /* Generate assembly to calculate CRC
    using carry-less multiplication instruction.
    OPERANDS[1] is input CRC,
@@ -26985,22 +26987,37 @@ ix86_expand_crc_pclmulqdq (scalar_mode crc_mode,
     crc = expand_shift (RSHIFT_EXPR, DImode, crc, crc_size - data_size,
 			NULL_RTX, 1);
 
-  rtx t0 = force_reg (DImode, gen_int_mode (q, DImode));
-  polynomial = simplify_gen_unary (ZERO_EXTEND, DImode, polynomial,
+  rtx t0 = force_reg (V2DImode,
+		      gen_rtx_CONST_VECTOR (V2DImode,
+					    gen_rtvec (2,
+						       GEN_INT (0),
+						       GEN_INT (q))));
+
+  polynomial = gen_rtx_CONST_VECTOR (V2DImode,
+				     gen_rtvec (2, GEN_INT (0),
+						GEN_INT (UINTVAL
+							 (polynomial))));
+  
+  polynomial = simplify_gen_unary (ZERO_EXTEND, V2DImode, polynomial,
 				   GET_MODE (polynomial));
-  rtx t1 = force_reg (DImode, polynomial);
+  rtx t1 = force_reg (V2DImode, polynomial);
 
   rtx a0 = expand_binop (DImode, xor_optab, crc, data, NULL_RTX, 1,
 			 OPTAB_WIDEN);
 
-  rtx res = gen_reg_rtx (TImode);
-  emit_insn (gen_pclmulqdq (res, a0, t0, CONST0_RTX (QImode)));
-  a0 = gen_lowpart (DImode, res);
+  rtx a0v = gen_reg_rtx (V2DImode);
+  ix86_expand_vector_init_one_nonzero (false, V2DImode, a0v, a0, 0);
 
-  a0 = expand_shift (RSHIFT_EXPR, DImode, a0, crc_size, NULL_RTX, 1);
+  rtx res = gen_reg_rtx (V2DImode);
+  emit_insn (gen_pclmulqdq (res, a0v, t0, CONST0_RTX (SImode)));
+  a0 = gen_lowpart (V2DImode, res);
 
-  emit_insn (gen_pclmulqdq (res, a0, t1, CONST0_RTX (QImode)));
-  a0 = gen_lowpart (DImode, res);
+  a0 = expand_shift (RSHIFT_EXPR, V2DImode, a0, crc_size, NULL_RTX, 1);
+
+  emit_insn (gen_pclmulqdq (res, a0, t1, CONST0_RTX (SImode)));
+  a0 = gen_lowpart (V2DImode, res);
+
+  a0 = force_subreg (DImode, a0, V2DImode, 0);
 
   if (crc_size > data_size)
     {
@@ -27040,7 +27057,7 @@ ix86_expand_reversed_crc_pclmulqdq (scalar_mode crc_mode,
       q = gf2n_poly_long_div_quotient (UINTVAL (polynomial), crc_size);
   /* Reflect the calculated quotient.  */
   q = reflect_hwi (q, crc_size + 1);
-  rtx t0 = force_reg (DImode, gen_int_mode (q, DImode));
+  rtx t0 = force_reg (V2DImode, gen_lowpart (DImode, GEN_INT (q)));
 
   /* Reflect the polynomial.  */
   unsigned HOST_WIDE_INT ref_polynomial = reflect_hwi (UINTVAL (polynomial),
@@ -27052,29 +27069,31 @@ ix86_expand_reversed_crc_pclmulqdq (scalar_mode crc_mode,
   rtx t1 = force_reg (DImode, gen_int_mode (ref_polynomial, DImode));
 
   /* CRC calculation's main part.  */
-  rtx a0 = expand_binop (DImode, xor_optab, crc, data, NULL_RTX, 1,
+  rtx a0 = expand_binop (DImode, xor_optab, crc, data,
+			 NULL_RTX, 1,
 			 OPTAB_WIDEN);
 
   /* Perform carry-less multiplication and get low part.  */
-  rtx res = gen_reg_rtx (TImode);
+  rtx res = gen_reg_rtx (V2DImode);
   emit_insn (gen_pclmulqdq (res, a0, t0, CONST0_RTX (SImode)));
-  a0 = gen_lowpart (DImode, res);
+  a0 = gen_lowpart (V2DImode, res);
 
-  a0 = expand_binop (DImode, and_optab, a0,
-		     gen_int_mode (GET_MODE_MASK (data_mode), DImode),
+  a0 = expand_binop (V2DImode, and_optab, a0,
+		     gen_int_mode (GET_MODE_MASK (data_mode), V2DImode),
 		     NULL_RTX, 1, OPTAB_WIDEN);
 
-  /* Perform carry-less multiplication.  */
-  emit_insn (gen_pclmulqdq (res, a0, t1, CONST0_RTX (QImode)));
+  emit_insn (gen_pclmulqdq (res, a0, t1, CONST0_RTX (SImode)));
 
-#if 0 // FIXME
-  /* Perform a shift right by CRC_SIZE as an extraction of lane 1.  */
-  machine_mode crc_vmode = aarch64_v128_mode (crc_mode).require ();
-  a0 = (crc_size > data_size ? gen_reg_rtx (crc_mode) : operands[0]);
-  emit_insn (gen_aarch64_get_lane (crc_vmode, a0,
-				   gen_lowpart (crc_vmode, pmull_res),
-				   aarch64_endian_lane_rtx (crc_vmode, 1)));
-#endif
+  /* Move CRC to lower bits using PSHUFB.  */
+  rtx vec[16];
+  unsigned i;
+  for (i = 0; i < crc_size / 8; i++)
+    vec[i] = GEN_INT (i + crc_size / 8);
+  for (;  i < 16; i++)
+    vec[i] = GEN_INT (-1);
+  emit_insn (gen_ssse3_pshufbv8qi3 (res, gen_lowpart (crc_mode, res),
+				gen_rtx_CONST_VECTOR (V8QImode,
+					      gen_rtvec_v (16, vec))));
 
   if (crc_size > data_size)
     {
