@@ -969,8 +969,7 @@ bitmap_set_bit (bitmap head, int bit)
   if (ptr != 0)
     {
       bool res = (ptr->bits[word_num] & bit_val) == 0;
-      if (res)
-	ptr->bits[word_num] |= bit_val;
+      ptr->bits[word_num] |= bit_val;
       return res;
     }
 
