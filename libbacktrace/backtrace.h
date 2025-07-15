@@ -105,6 +105,17 @@ extern struct backtrace_state *backtrace_create_state (
     const char *filename, int threaded,
     backtrace_error_callback error_callback, void *data);
 
+/* Structure with additional useful data passed to callbacks.
+   The pointer to the structure is only valid during the duration of
+   the callback.  */
+struct backtrace_extra
+{
+  /* The discriminator.  */
+  int disc;
+  /* The line number of the function declaration or 0.  */
+  int decl_line;
+};
+
 /* The type of the callback argument to the backtrace_full function.
    DATA is the argument passed to backtrace_full.  PC is the program
    counter.  FILENAME is the name of the file containing PC, or NULL
@@ -114,12 +125,12 @@ extern struct backtrace_state *backtrace_create_state (
    continuing tracing.  The FILENAME and FUNCTION buffers may become
    invalid after this function returns.  */
 
-/* This version of the callback also passes the discriminator as last
-   argument. It should be used with backtrace_pcinfo_disc.  */
-typedef int (*backtrace_full_disc_callback) (void *data, uintptr_t pc,
+/* This version of the callback also passes a pointer to backtrace_extra as
+   last argument. It should be used with backtrace_pcinfo_extra.  */
+typedef int (*backtrace_full_extra_callback) (void *data, uintptr_t pc,
 					const char *filename, int lineno,
 					const char *function,
-					int disc);
+					struct backtrace_extra *extra);
 
 typedef int (*backtrace_full_callback) (void *data, uintptr_t pc,
 					const char *filename, int lineno,
@@ -180,11 +191,11 @@ extern int backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
 			     backtrace_error_callback error_callback,
 			     void *data);
 
-/* Similar to backtrace_pcinfo, but the full callback also gets the discriminator
+/* Similar to backtrace_pcinfo, but the full callback also gets backtrace_extra
    passed as last argument.  */
 
-extern int backtrace_pcinfo_disc (struct backtrace_state *state, uintptr_t pc,
-			     backtrace_full_disc_callback callback,
+extern int backtrace_pcinfo_extra (struct backtrace_state *state, uintptr_t pc,
+			     backtrace_full_extra_callback callback,
 			     backtrace_error_callback error_callback,
 			     void *data);
 

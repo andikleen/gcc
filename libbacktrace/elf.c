@@ -570,7 +570,7 @@ elf_nosyms (struct backtrace_state *state ATTRIBUTE_UNUSED,
 
 static int
 elf_nodebug (struct backtrace_state *state, uintptr_t pc,
-	     backtrace_full_disc_callback callback,
+	     backtrace_full_extra_callback callback,
 	     backtrace_error_callback error_callback, void *data)
 {
   if (state->syminfo_fn != NULL && state->syminfo_fn != elf_nosyms)

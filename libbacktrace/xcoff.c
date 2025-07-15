@@ -405,7 +405,7 @@ struct dwsect_info
 static int
 xcoff_nodebug (struct backtrace_state *state ATTRIBUTE_UNUSED,
 	       uintptr_t pc ATTRIBUTE_UNUSED,
-	       backtrace_full_disc_callback callback ATTRIBUTE_UNUSED,
+	       backtrace_full_extra_callback callback ATTRIBUTE_UNUSED,
 	       backtrace_error_callback error_callback, void *data)
 {
   error_callback (data, "no debug info in XCOFF executable", -1);
@@ -725,7 +725,7 @@ xcoff_incl_search (const void *vkey, const void *ventry)
 static int
 xcoff_lookup_pc (struct backtrace_state *state ATTRIBUTE_UNUSED,
 		 struct xcoff_fileline_data *fdata, uintptr_t pc,
-		 backtrace_full_disc_callback callback,
+		 backtrace_full_extra_callback callback,
 		 backtrace_error_callback error_callback ATTRIBUTE_UNUSED,
 		 void *data, int *found)
 {
@@ -813,7 +813,7 @@ xcoff_lookup_pc (struct backtrace_state *state ATTRIBUTE_UNUSED,
 
 static int
 xcoff_fileline (struct backtrace_state *state, uintptr_t pc,
-		backtrace_full_disc_callback callback,
+		backtrace_full_extra_callback callback,
 		backtrace_error_callback error_callback, void *data)
 
 {
@@ -855,7 +855,7 @@ xcoff_fileline (struct backtrace_state *state, uintptr_t pc,
 
   /* FIXME: See if any libraries have been dlopen'ed.  */
 
-  return callback (data, pc, NULL, 0, NULL, 0);
+  return callback (data, pc, NULL, 0, NULL, &backtrace_extra_empty);
 }
 
 /* Initialize the function vector info for xcoff_fileline.  */

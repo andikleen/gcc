@@ -267,6 +267,8 @@ struct function
   int caller_lineno;
   /* Dito for the discriminator.  */
   int caller_disc;
+  /* Dito for the line of the declaration.  */
+  int decl_line;
   /* Map PC ranges to inlined functions.  */
   struct function_addrs *function_addrs;
   size_t function_addrs_count;
@@ -2494,8 +2496,6 @@ add_line (struct backtrace_state *state, struct dwarf_data *ddata,
 {
   struct line *ln;
 
-  /* If we are adding the same mapping, ignore it.  This can happen
-     when using discriminators.  */
   if (vec->count > 0)
     {
       ln = (struct line *) vec->vec.base + (vec->count - 1);
@@ -3530,6 +3530,11 @@ read_function_entry (struct backtrace_state *state, struct dwarf_data *ddata,
 		    function->caller_disc = val.u.uint;
 		  break;
 
+		case DW_AT_decl_line:
+		  if (val.encoding == ATTR_VAL_UINT)
+		    function->decl_line = val.u.uint;
+		  break;
+
 		case DW_AT_abstract_origin:
 		case DW_AT_specification:
 		  /* Second name preference: override DW_AT_name, don't override
@@ -3765,18 +3770,20 @@ read_function_info (struct backtrace_state *state, struct dwarf_data *ddata,
 }
 
 /* See if PC is inlined in FUNCTION.  If it is, print out the inlined
-   information, and update FILENAME and LINENO and DISC for the caller.
+   information, and update FILENAME and LINENO and DISC and DECL_LINE
+   for the caller.
    Returns whatever CALLBACK returns, or 0 to keep going.  */
 
 static int
 report_inlined_functions (uintptr_t pc, struct function *function,
-			  backtrace_full_disc_callback callback, void *data,
+			  backtrace_full_extra_callback callback, void *data,
 			  const char **filename, int *lineno,
-			  int *disc)
+			  int *disc, int *decl_line)
 {
   struct function_addrs *p;
   struct function_addrs *match;
   struct function *inlined;
+  struct backtrace_extra extra;
   int ret;
 
   if (function->function_addrs_count == 0)
@@ -3825,12 +3832,14 @@ report_inlined_functions (uintptr_t pc, struct function *function,
 
   /* Report any calls inlined into this one.  */
   ret = report_inlined_functions (pc, inlined, callback, data,
-				  filename, lineno, disc);
+				  filename, lineno, disc, decl_line);
   if (ret != 0)
     return ret;
 
   /* Report this inlined call.  */
-  ret = callback (data, pc, *filename, *lineno, inlined->name, *disc);
+  extra.disc = *disc;
+  extra.decl_line = *decl_line;
+  ret = callback (data, pc, *filename, *lineno, inlined->name, &extra);
   if (ret != 0)
     return ret;
 
@@ -3839,6 +3848,7 @@ report_inlined_functions (uintptr_t pc, struct function *function,
   *filename = inlined->caller_filename;
   *lineno = inlined->caller_lineno;
   *disc = inlined->caller_disc;
+  *decl_line = inlined->decl_line;
 
   return 0;
 }
@@ -3850,7 +3860,7 @@ report_inlined_functions (uintptr_t pc, struct function *function,
 
 static int
 dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
-		 uintptr_t pc, backtrace_full_disc_callback callback,
+		 uintptr_t pc, backtrace_full_extra_callback callback,
 		 backtrace_error_callback error_callback, void *data,
 		 int *found)
 {
@@ -3866,7 +3876,9 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
   const char *filename;
   int lineno;
   int disc = 0;
+  int decl_line = 0;
   int ret;
+  struct backtrace_extra extra;
 
   *found = 1;
 
@@ -4007,7 +4019,7 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
       if (new_data)
 	return dwarf_lookup_pc (state, ddata, pc, callback, error_callback,
 				data, found);
-      return callback (data, pc, NULL, 0, NULL, 0);
+      return callback (data, pc, NULL, 0, NULL, &backtrace_extra_empty);
     }
 
   /* Search for PC within this unit.  */
@@ -4054,13 +4066,18 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
 	  entry->u->abs_filename = filename;
 	}
 
-      return callback (data, pc, entry->u->abs_filename, 0, NULL, 0);
+      return callback (data, pc, entry->u->abs_filename, 0, NULL,
+		       &backtrace_extra_empty);
     }
 
   /* Search for function name within this unit.  */
 
   if (entry->u->function_addrs_count == 0)
-    return callback (data, pc, ln->filename, ln->lineno, NULL, ln->disc);
+    {
+      extra.decl_line = 0;
+      extra.disc = ln->disc;
+      return callback (data, pc, ln->filename, ln->lineno, NULL, &extra);
+    }
 
   p = ((struct function_addrs *)
        bsearch (&pc, entry->u->function_addrs,
@@ -4068,7 +4085,11 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
 		sizeof (struct function_addrs),
 		function_addrs_search));
   if (p == NULL)
-    return callback (data, pc, ln->filename, ln->lineno, NULL, ln->disc);
+    {
+      extra.decl_line = 0;
+      extra.disc = ln->disc;
+      return callback (data, pc, ln->filename, ln->lineno, NULL, &extra);
+    }
 
   /* Here pc >= p->low && pc < (p + 1)->low.  The function_addrs are
      sorted by low, so if pc > p->low we are at the end of a range of
@@ -4092,7 +4113,11 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
       --p;
     }
   if (fmatch == NULL)
-    return callback (data, pc, ln->filename, ln->lineno, NULL, ln->disc);
+    {
+      extra.decl_line = 0;
+      extra.disc = ln->disc;
+      return callback (data, pc, ln->filename, ln->lineno, NULL, &extra);
+    }
 
   function = fmatch->function;
 
@@ -4101,11 +4126,13 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
   disc = ln->disc;
 
   ret = report_inlined_functions (pc, function, callback, data,
-				  &filename, &lineno, &disc);
+				  &filename, &lineno, &disc, &decl_line);
   if (ret != 0)
     return ret;
 
-  return callback (data, pc, filename, lineno, function->name, disc);
+  extra.disc = disc;
+  extra.decl_line = decl_line;
+  return callback (data, pc, filename, lineno, function->name, &extra);
 }
 
 
@@ -4114,7 +4141,7 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
 
 static int
 dwarf_fileline (struct backtrace_state *state, uintptr_t pc,
-		backtrace_full_disc_callback callback,
+		backtrace_full_extra_callback callback,
 		backtrace_error_callback error_callback, void *data)
 {
   struct dwarf_data *ddata;
@@ -4155,7 +4182,7 @@ dwarf_fileline (struct backtrace_state *state, uintptr_t pc,
 
   /* FIXME: See if any libraries have been dlopen'ed.  */
 
-  return callback (data, pc, NULL, 0, NULL, 0);
+  return callback (data, pc, NULL, 0, NULL, &backtrace_extra_empty);
 }
 
 /* Initialize our data structures from the DWARF debug info for a
