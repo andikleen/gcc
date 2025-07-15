@@ -46,7 +46,7 @@ unknown_fileline (struct backtrace_state *state ATTRIBUTE_UNUSED,
 		  void *data)
 
 {
-  return callback (data, pc, NULL, 0, NULL, 0);
+  return callback (data, pc, NULL, 0, NULL, &backtrace_extra_empty);
 }
 
 /* Initialize the backtrace data when we don't know how to read the
