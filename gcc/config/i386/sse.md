@@ -26559,9 +26559,9 @@
 
 ;; XOP packed rotate instructions
 (define_expand "rotl<mode>3"
-  [(set (match_operand:VI_128 0 "register_operand")
-	(rotate:VI_128
-	 (match_operand:VI_128 1 "nonimmediate_operand")
+  [(set (match_operand:VI248_128 0 "register_operand")
+	(rotate:VI248_128
+	 (match_operand:VI248_128 1 "nonimmediate_operand")
 	 (match_operand:SI 2 "general_operand")))]
   "TARGET_XOP"
 {
@@ -26590,9 +26590,9 @@
 })
 
 (define_expand "rotr<mode>3"
-  [(set (match_operand:VI_128 0 "register_operand")
-	(rotatert:VI_128
-	 (match_operand:VI_128 1 "nonimmediate_operand")
+  [(set (match_operand:VI248_128 0 "register_operand")
+	(rotatert:VI248_128
+	 (match_operand:VI248_128 1 "nonimmediate_operand")
 	 (match_operand:SI 2 "general_operand")))]
   "TARGET_XOP"
 {
@@ -26984,8 +26984,75 @@
       gen = (<CODE> == LSHIFTRT ? gen_xop_shlv16qi3 : gen_xop_shav16qi3);
       emit_insn (gen (operands[0], operands[1], tmp));
     }
+  else if (TARGET_GFNI && CONST_INT_P (operands[2]))
+    {
+      rtx matrix = ix86_vgf2p8affine_shift_matrix (operands[0], operands[2],
+						   <CODE>);
+      emit_insn (gen_vgf2p8affineqb_<mode> (operands[0], operands[1], matrix,
+					    GEN_INT (0)));
+    }
   else
     ix86_expand_vecop_qihi (<CODE>, operands[0], operands[1], operands[2]);
+  DONE;
+})
+
+(define_expand "<insn><mode>3_mask"
+  [(set (match_operand:VI1_AVX512 0 "register_operand")
+	(any_shift:VI1_AVX512
+	  (match_operand:VI1_AVX512 1 "register_operand")
+	  (match_operand:SI 2 "const_int_operand")))
+	(match_operand:VI1_AVX512 3 "nonimm_or_0_operand")
+	(match_operand:<avx512fmaskmode> 4 "register_operand")]
+  "TARGET_GFNI"
+{
+  rtx matrix = ix86_vgf2p8affine_shift_matrix (operands[0], operands[2], <CODE>);
+  emit_insn (gen_vgf2p8affineqb_<mode>_mask (operands[0], operands[1], matrix,
+	      GEN_INT (0), operands[3], operands[4]));
+  DONE;
+})
+
+(define_expand "<insn><mode>3<mask_name>"
+  [(set (match_operand:VI1_AVX512 0 "register_operand")
+	(any_rotate:VI1_AVX512
+	  (match_operand:VI1_AVX512 1 "register_operand")
+	  (match_operand:SI 2 "const_int_operand")))]
+  ""
+{
+  /* Handle the V16QI XOP case to avoid a conflict with the other expand.  */
+  if (TARGET_XOP && ARRAY_SIZE (operands) <= 3 && <MODE>mode == V16QImode
+	&& ! const_0_to_7_operand (operands[2], SImode))
+    {
+      rtvec vs = rtvec_alloc (16);
+      rtx par = gen_rtx_PARALLEL (V16QImode, vs);
+      rtx reg = gen_reg_rtx (V16QImode);
+      rtx op2 = operands[2];
+      int i;
+
+      if (GET_MODE (op2) != QImode)
+	{
+	  op2 = gen_reg_rtx (QImode);
+	  convert_move (op2, operands[2], false);
+	}
+
+      for (i = 0; i < 16; i++)
+	RTVEC_ELT (vs, i) = op2;
+
+      emit_insn (gen_vec_initv16qiqi (reg, par));
+      if (<CODE> == ROTATERT)
+	{
+	  rtx neg = gen_reg_rtx (<MODE>mode);
+	  emit_insn (gen_neg<mode>2 (neg, reg));
+	  emit_insn (gen_xop_vrotlv16qi3 (operands[0], operands[1], neg));
+	  reg = neg;
+	}
+      emit_insn (gen_xop_vrotlv16qi3 (operands[0], operands[1], reg));
+      DONE;
+    }
+  else if (!TARGET_GFNI)
+    FAIL;
+  rtx matrix = ix86_vgf2p8affine_shift_matrix (operands[0], operands[2], <CODE>);
+  emit_insn (gen_vgf2p8affineqb_<mode><mask_name> (operands[0], operands[1], matrix,
+		  GEN_INT (0) <mask_operand_arg34>));
   DONE;
 })
 
