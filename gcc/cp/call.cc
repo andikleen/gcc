@@ -12013,8 +12013,14 @@ build_new_method_call (tree instance, tree fns, vec<tree, va_gc> **args,
   if (fn_p)
     *fn_p = NULL_TREE;
 
-  if (error_operand_p (instance)
-      || !fns || error_operand_p (fns))
+  if (!fns)
+    {
+      if (complain & tf_error)
+	error ("lambda not allowed in this context");
+      return error_mark_node;
+    }
+
+  if (error_operand_p (instance) || error_operand_p (fns))
     return error_mark_node;
 
   if (!BASELINK_P (fns))

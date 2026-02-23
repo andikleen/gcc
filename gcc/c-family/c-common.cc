@@ -7262,6 +7262,11 @@ fold_offsetof (tree expr, tree type, enum tree_code ctx)
 		 "member %qD", t);
 	  return error_mark_node;
 	}
+      if (!DECL_FIELD_BIT_OFFSET (t))
+	{
+	  sorry ("cannot take %<offsetof%> on this context");
+	  return error_mark_node;
+	}
       off = size_binop_loc (input_location, PLUS_EXPR, DECL_FIELD_OFFSET (t),
 			    size_int (tree_to_uhwi (DECL_FIELD_BIT_OFFSET (t))
 				      / BITS_PER_UNIT));
