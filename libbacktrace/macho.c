@@ -748,9 +748,9 @@ macho_syminfo (struct backtrace_state *state, uintptr_t addr,
     }
 
   if (sym == NULL)
-    callback (data, addr, NULL, 0, &backtrace_extra_empty);
+    callback (data, addr, NULL, 0, 0);
   else
-    callback (data, addr, sym->name, sym->address, &backtrace_extra_emptyn);
+    callback (data, addr, sym->name, sym->address, 0);
 }
 
 /* Look through a fat file to find the relevant executable.  Returns 1

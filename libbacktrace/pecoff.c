@@ -238,7 +238,8 @@ static int
 coff_nodebug (struct backtrace_state *state ATTRIBUTE_UNUSED,
 	      uintptr_t pc ATTRIBUTE_UNUSED,
 	      backtrace_full_callback callback ATTRIBUTE_UNUSED,
-	      backtrace_error_callback error_callback, void *data)
+	      backtrace_error_callback error_callback, void *data,
+	      struct backtrace_extra *extra ATTRIBUTE_UNUSED)
 {
   error_callback (data, "no debug info in PE/COFF executable (make sure to compile with -g)", -1);
   return 0;
@@ -623,9 +624,9 @@ coff_syminfo (struct backtrace_state *state, uintptr_t addr,
     }
 
   if (sym == NULL)
-    callback (data, addr, NULL, 0, &backtrace_extra_empty);
+    callback (data, addr, NULL, 0, 0);
   else
-    callback (data, addr, sym->name, sym->address, &backtrace_extra_empty);
+    callback (data, addr, sym->name, sym->address, 0);
 }
 
 /* Add the backtrace data for one PE/COFF file.  Returns 1 on success,

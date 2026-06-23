@@ -3214,15 +3214,16 @@ read_line_info (struct backtrace_state *state, struct dwarf_data *ddata,
 
 static const char *read_referenced_name (struct dwarf_data *, struct unit *,
 					 uint64_t, backtrace_error_callback,
-					 void *);
+					 void *, int *);
 
-/* Read the name of a function from a DIE referenced by ATTR with VAL.  */
+/* Read the name of a function from a DIE referenced by ATTR with VAL,
+   optionally storing the die decl_line to DECL_LINE.  */
 
 static const char *
 read_referenced_name_from_attr (struct dwarf_data *ddata, struct unit *u,
 				struct attr *attr, struct attr_val *val,
 				backtrace_error_callback error_callback,
-				void *data)
+				void *data, int *decl_line)
 {
   switch (attr->name)
     {
@@ -3245,12 +3246,14 @@ read_referenced_name_from_attr (struct dwarf_data *ddata, struct unit *u,
 	return NULL;
 
       uint64_t offset = val->u.uint - unit->low_offset;
-      return read_referenced_name (ddata, unit, offset, error_callback, data);
+      return read_referenced_name (ddata, unit, offset, error_callback, data,
+				   decl_line);
     }
 
   if (val->encoding == ATTR_VAL_UINT
       || val->encoding == ATTR_VAL_REF_UNIT)
-    return read_referenced_name (ddata, u, val->u.uint, error_callback, data);
+    return read_referenced_name (ddata, u, val->u.uint, error_callback, data,
+				 decl_line);
 
   if (val->encoding == ATTR_VAL_REF_ALT_INFO)
     {
@@ -3262,7 +3265,7 @@ read_referenced_name_from_attr (struct dwarf_data *ddata, struct unit *u,
 
       uint64_t offset = val->u.uint - alt_unit->low_offset;
       return read_referenced_name (ddata->altlink, alt_unit, offset,
-				   error_callback, data);
+				   error_callback, data, decl_line);
     }
 
   return NULL;
@@ -3275,7 +3278,7 @@ read_referenced_name_from_attr (struct dwarf_data *ddata, struct unit *u,
 static const char *
 read_referenced_name (struct dwarf_data *ddata, struct unit *u,
 		      uint64_t offset, backtrace_error_callback error_callback,
-		      void *data)
+		      void *data, int *decl_line)
 {
   struct dwarf_buf unit_buf;
   uint64_t code;
@@ -3367,10 +3370,16 @@ read_referenced_name (struct dwarf_data *ddata, struct unit *u,
 	    const char *name;
 
 	    name = read_referenced_name_from_attr (ddata, u, &abbrev->attrs[i],
-						   &val, error_callback, data);
+						   &val, error_callback, data,
+						   decl_line);
 	    if (name != NULL)
 	      ret = name;
 	  }
+	  break;
+
+	case DW_AT_decl_line:
+	  if (decl_line != NULL && val.encoding == ATTR_VAL_UINT)
+	    *decl_line = val.u.uint;
 	  break;
 
 	default:
@@ -3547,7 +3556,8 @@ read_function_entry (struct backtrace_state *state, struct dwarf_data *ddata,
 		    name
 		      = read_referenced_name_from_attr (ddata, u,
 							&abbrev->attrs[i], &val,
-							error_callback, data);
+							error_callback, data,
+							&function->decl_line);
 		    if (name != NULL)
 		      function->name = name;
 		  }
@@ -3838,7 +3848,9 @@ report_inlined_functions (uintptr_t pc, struct function *function,
 
   /* Report this inlined call.  */
   extra.disc = *disc;
-  extra.decl_line = *decl_line;
+  /* Report the declaration line of the inlined function itself, not the
+     value threaded in from the caller.  */
+  extra.decl_line = inlined->decl_line;
   ret = callback (data, pc, *filename, *lineno, inlined->name, &extra);
   if (ret != 0)
     return ret;
@@ -3848,7 +3860,6 @@ report_inlined_functions (uintptr_t pc, struct function *function,
   *filename = inlined->caller_filename;
   *lineno = inlined->caller_lineno;
   *disc = inlined->caller_disc;
-  *decl_line = inlined->decl_line;
 
   return 0;
 }
@@ -4131,7 +4142,11 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
     return ret;
 
   extra.disc = disc;
-  extra.decl_line = decl_line;
+  /* For the outermost (non-inlined) function report its own declaration
+     line.  The DECL_LINE variable updated by report_inlined_functions
+     carries the declaration line of the innermost inlined callee, which
+     is not what we want for the containing function.  */
+  extra.decl_line = function->decl_line;
   return callback (data, pc, filename, lineno, function->name, &extra);
 }
 
