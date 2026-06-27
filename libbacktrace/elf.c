@@ -7380,6 +7380,7 @@ struct phdr_data
   int *found_dwarf;
   const char *exe_filename;
   int exe_descriptor;
+  int exe_found;
 };
 
 /* Callback passed to dl_iterate_phdr.  Load debug info from shared
@@ -7410,6 +7411,7 @@ phdr_callback (struct dl_phdr_info *info, size_t size ATTRIBUTE_UNUSED,
       filename = pd->exe_filename;
       descriptor = pd->exe_descriptor;
       pd->exe_descriptor = -1;
+      pd->exe_found = 1;
     }
   else
     {
@@ -7424,6 +7426,8 @@ phdr_callback (struct dl_phdr_info *info, size_t size ATTRIBUTE_UNUSED,
 				   pd->data, &does_not_exist);
       if (descriptor < 0)
 	return 0;
+      if (strcmp (filename, pd->exe_filename) == 0)
+	pd->exe_found = 1;
     }
 
   base_address.m = info->dlpi_addr;
@@ -7478,9 +7482,60 @@ backtrace_initialize (struct backtrace_state *state, const char *filename,
   pd.found_sym = &found_sym;
   pd.found_dwarf = &found_dwarf;
   pd.exe_filename = filename;
-  pd.exe_descriptor = ret < 0 ? descriptor : -1;
+
+  /* For ET_DYN files, only treat the already-opened descriptor as the
+     main executable if FILENAME refers to the running process itself.
+     Otherwise offline analysis of an arbitrary shared library/PIE would
+     mis-attribute the first dl_iterate_phdr entry (the current executable)
+     to FILENAME and skip the zero-base fallback.  */
+  if (ret < 0)
+    {
+      char self_path[4096];
+      ssize_t self_len;
+
+      pd.exe_descriptor = -1;
+      self_len = readlink ("/proc/self/exe", self_path, sizeof (self_path) - 1);
+      if (self_len > 0)
+	{
+	  char *filename_abs;
+
+	  self_path[self_len] = '\0';
+	  filename_abs = realpath (filename, NULL);
+	  if (filename_abs != NULL)
+	    {
+	      if (strcmp (self_path, filename_abs) == 0)
+		pd.exe_descriptor = descriptor;
+	      free (filename_abs);
+	    }
+	}
+    }
+  else
+    pd.exe_descriptor = -1;
+
+  pd.exe_found = 0;
 
   dl_iterate_phdr (phdr_callback, (void *) &pd);
+
+  /* If the executable is ET_DYN (PIE / shared library) and dl_iterate_phdr
+     didn't find it in the current process (offline analysis), fall back to
+     loading with zero base address using exe=0 so the DWARF data is still
+     loaded with file-relative addresses.  */
+  if (ret < 0 && !pd.exe_found)
+    {
+      struct libbacktrace_base_address zero_base_address;
+      int does_not_exist;
+      int new_descriptor;
+
+      memset (&zero_base_address, 0, sizeof zero_base_address);
+      new_descriptor = backtrace_open (filename, error_callback, data,
+				       &does_not_exist);
+      if (new_descriptor >= 0)
+	{
+	  elf_add (state, filename, new_descriptor, NULL, 0, zero_base_address,
+		   NULL, error_callback, data, &elf_fileline_fn, &found_sym,
+		   &found_dwarf, NULL, 0, 0, NULL, 0);
+	}
+    }
 
   if (!state->threaded)
     {
