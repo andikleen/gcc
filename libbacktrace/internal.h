@@ -143,6 +143,8 @@ struct backtrace_state
   const char *filename;
   /* Non-zero if threaded.  */
   int threaded;
+  /* Non-zero if MOREDATA flag was set.  */
+  int moredata;
   /* The master lock for fileline_fn, fileline_data, syminfo_fn,
      syminfo_data, fileline_initialization_failed and everything the
      data pointers point to.  */

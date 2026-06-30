@@ -51,7 +51,7 @@ backtrace_create_state (const char *filename, int threaded,
   struct backtrace_state *state;
 
 #ifndef HAVE_SYNC_FUNCTIONS
-  if (threaded)
+  if (threaded & 1)
     {
       error_callback (data, "backtrace library does not support threads", 0);
       return NULL;
@@ -60,7 +60,8 @@ backtrace_create_state (const char *filename, int threaded,
 
   memset (&init_state, 0, sizeof init_state);
   init_state.filename = filename;
-  init_state.threaded = threaded;
+  init_state.threaded = threaded & 1;
+  init_state.moredata = (threaded & 2) != 0;
 
   state = ((struct backtrace_state *)
 	   backtrace_alloc (&init_state, sizeof *state, error_callback, data));

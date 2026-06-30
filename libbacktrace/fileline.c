@@ -31,6 +31,7 @@ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.  */
 
 #include "config.h"
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -393,6 +394,15 @@ backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
   if (state->fileline_initialization_failed)
     return 0;
 
+  if (state->moredata)
+    {
+      struct backtrace_moredata md;
+      memset (&md, 0, sizeof md);
+      md.version = 4;
+      md.data = data;
+      return state->fileline_fn (state, pc, callback, error_callback, &md);
+    }
+
   return state->fileline_fn (state, pc, callback, error_callback, data);
 }
 
@@ -409,7 +419,16 @@ backtrace_syminfo (struct backtrace_state *state, uintptr_t pc,
   if (state->fileline_initialization_failed)
     return 0;
 
-  state->syminfo_fn (state, pc, callback, error_callback, data);
+  if (state->moredata)
+    {
+      struct backtrace_moredata md;
+      memset (&md, 0, sizeof md);
+      md.version = 4;
+      md.data = data;
+      state->syminfo_fn (state, pc, callback, error_callback, &md);
+    }
+  else
+    state->syminfo_fn (state, pc, callback, error_callback, data);
   return 1;
 }
 

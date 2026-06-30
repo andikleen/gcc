@@ -31,6 +31,7 @@ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.  */
 
 #include "config.h"
+#include <string.h>
 
 #include <sys/types.h>
 
@@ -86,7 +87,18 @@ unwind (struct _Unwind_Context *context, void *vdata)
     --pc;
 
   if (!bdata->can_alloc)
-    bdata->ret = bdata->callback (bdata->data, pc, NULL, 0, NULL);
+    {
+      if (bdata->state->moredata)
+	{
+	  struct backtrace_moredata md;
+	  memset (&md, 0, sizeof md);
+	  md.version = 4;
+	  md.data = bdata->data;
+	  bdata->ret = bdata->callback (&md, pc, NULL, 0, NULL);
+	}
+      else
+	bdata->ret = bdata->callback (bdata->data, pc, NULL, 0, NULL);
+    }
   else
     bdata->ret = backtrace_pcinfo (bdata->state, pc, bdata->callback,
 				   bdata->error_callback, bdata->data);
