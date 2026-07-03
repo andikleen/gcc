@@ -49,7 +49,7 @@ model*:\ 31|\
 model*:\ 26|\
 model*:\ 47|\
 model*:\ 37|\
-model*:\ 44) E="cpu/event=0x88,umask=0x40/$FLAGS" ;;
+model*:\ 44) E="cpu/event=0x88,umask=0x40,period=200000/$FLAGS" ;;
 model*:\ 55|\
 model*:\ 74|\
 model*:\ 77|\
@@ -59,12 +59,12 @@ model*:\ 92|\
 model*:\ 95|\
 model*:\ 87|\
 model*:\ 133|\
-model*:\ 122) E="cpu/event=0xC4,umask=0xFE/p$FLAGS" ;;
+model*:\ 122) E="cpu/event=0xC4,umask=0xFE,period=200003/$FLAGS" ;;
 model*:\ 28|\
 model*:\ 38|\
 model*:\ 39|\
 model*:\ 54|\
-model*:\ 53) E="cpu/event=0x88,umask=0x41/$FLAGS" ;;
+model*:\ 53) E="cpu/event=0x88,umask=0x41,period=2000000/$FLAGS" ;;
 model*:\ 42|\
 model*:\ 45|\
 model*:\ 58|\
@@ -84,7 +84,7 @@ model*:\ 158|\
 model*:\ 165|\
 model*:\ 166|\
 model*:\ 85|\
-model*:\ 85) E="cpu/event=0xC4,umask=0x20/p$FLAGS" ;;
+model*:\ 85) E="cpu/event=0xC4,umask=0x20,period=400009/$FLAGS" ;;
 model*:\ 125|\
 model*:\ 126|\
 model*:\ 167|\
@@ -95,21 +95,39 @@ model*:\ 207|\
 model*:\ 106|\
 model*:\ 108|\
 model*:\ 173|\
-model*:\ 174) E="cpu/event=0xc4,umask=0x20/$FLAGS" ;;
+model*:\ 174) E="cpu/event=0xc4,umask=0x20,period=400009/p$FLAGS" ;;
 model*:\ 134|\
 model*:\ 150|\
-model*:\ 156) E="cpu/event=0xc4,umask=0xfe/p$FLAGS" ;;
+model*:\ 156) E="cpu/event=0xc4,umask=0xfe,period=200003/$FLAGS" ;;
+model*:\ 151|\
+model*:\ 154|\
+model*:\ 183|\
+model*:\ 186|\
+model*:\ 191|\
+model*:\ 170|\
+model*:\ 172|\
+model*:\ 181|\
+model*:\ 189|\
+model*:\ 197|\
+model*:\ 198) E="cpu_atom/event=0xc4,umask=0xc0,period=200003/p$FLAGS,cpu_core/event=0xc4,umask=0x20,period=400009/p$FLAGS" ;;
 model*:\ 190|\
 model*:\ 175|\
-model*:\ 182) E="cpu/event=0xc4,umask=0xc0/$FLAGS" ;;
-model*:\ 190) E="cpu/event=0xc4,umask=0xfe/$FLAGS" ;;
+model*:\ 182) E="cpu/event=0xc4,umask=0xc0,period=200003/p$FLAGS" ;;
+model*:\ 204|\
+model*:\ 213) E="cpu_atom/event=0xc4,umask=0xfb,period=1000003/p$FLAGS,cpu_core/event=0xc4,umask=0xfb,period=400009/p$FLAGS" ;;
+model*:\ 221) E="cpu/event=0xc4,umask=0xfb,period=1000003/p$FLAGS" ;;
 *)
         if perf list br_inst_retired | grep -q br_inst_retired.near_taken ; then
-            E=br_inst_retired.near_taken:p
+            if [ -r /sys/devices/cpu_core -a -r /sys/devices/cpu_atom ] ; then
+              E=cpu_core/br_inst_retired.near_taken/p$FLAGS,cpu_atom/br_inst_retired.near_taken/p$FLAGS
+            else
+              E=br_inst_retired.near_taken:p
+            fi
         elif perf list ex_ret_brn_tkn | grep -q ex_ret_brn_tkn ; then
             E=ex_ret_brn_tkn:P$FLAGS
         elif $vendor = Intel ; then
-echo >&2 "Unknown Intel CPU. Run contrib/gen_autofdo_event.py --all --script to update script."
+echo >&2 "Unknown Intel CPU. Run gccsource/contrib/gen_autofdo_event.py --all --script to update script"
+echo >&2 "or update Linux perf version to version supporting this CPU."
 	  exit 1
         else
 echo >&2 "AMD CPU without support for ex_ret_brn_tkn event"

@@ -47,6 +47,7 @@ ap.add_argument('--script', help='Generate shell script', action='store_true')
 args = ap.parse_args()
 
 eventmap = collections.defaultdict(list)
+eventmod = dict()
 
 def get_cpustr():
     cpuinfo = os.getenv("CPUINFO")
@@ -72,23 +73,35 @@ def get_cpustr():
         return "%s-%d-%X-%X" % tuple(cpu)
     return "%s-%d-%X" % tuple(cpu)[:3]
 
-def find_event(eventurl, model):
+def find_event(eventurl, model, hybrid, htype):
     print("Downloading", eventurl, file = sys.stderr)
     u = urllib.request.urlopen(eventurl)
     events = json.loads(u.read())["Events"]
     u.close()
 
+    def gen_event(pmu, j):
+        return "%s/event=%s,umask=%s,period=%s/%s" % (htype, j['EventCode'], j['UMask'],
+                                   j["SampleAfterValue"],
+                                   "p" if "Precise" in j and j["Precise"] == "1" else "")
+
     found = 0
     for j in events:
         if j['EventName'] in target_events:
-            event = "cpu/event=%s,umask=%s/" % (j['EventCode'], j['UMask'])
-            if 'PEBS' in j and int(j['PEBS']) > 0:
-                event += "p"
+            if hybrid and htype != "cpu":
+              event = gen_event(htype, j)
+              if model in eventmod:
+                  event = eventmod[model] + "$FLAGS," + event
+              else:
+                  eventmod[model] = event
+                  return 1 # will be added later for the other core type
+            else:
+                event = gen_event("cpu", j)
             if args.script:
                 eventmap[event].append(model)
             else:
                 print(j['EventName'], "event for model", model, "is", event)
             found += 1
+            break
     return found
 
 if not args.all:
@@ -103,12 +116,17 @@ found = 0
 cpufound = 0
 for j in u:
     n = j.rstrip().decode().split(',')
-    if len(n) >= 4 and (args.all or fnmatch.fnmatch(cpu, n[0])) and n[3] == "core":
+    if len(n) >= 4 and (args.all or fnmatch.fnmatch(cpu, n[0])) and n[3] in ("core", "hybridcore"):
         components = n[0].split("-")
         model = components[2]
         model = int(model, 16)
         cpufound += 1
-        found += find_event(baseurl + n[2], model)
+        htype = "cpu"
+        if len(n) >= 7 and n[6]:
+            if n[6] not in ("Core", "Atom"):
+                continue
+            htype = "cpu_" + n[6].lower()
+        found += find_event(baseurl + n[2], model, n[3] == "hybridcore", htype)
 u.close()
 
 if args.script:
@@ -163,11 +181,16 @@ case `test $vendor = Intel && grep -E -q "^cpu family\s*: 6" /proc/cpuinfo &&
         print(r'model*:\ %s) E="%s$FLAGS" ;;' % (mod[-1], event))
     print(r'''*)
         if perf list br_inst_retired | grep -q br_inst_retired.near_taken ; then
-            E=br_inst_retired.near_taken:p
+            if [ -r /sys/devices/cpu_core -a -r /sys/devices/cpu_atom ] ; then
+              E=cpu_core/br_inst_retired.near_taken/p$FLAGS,cpu_atom/br_inst_retired.near_taken/p$FLAGS
+            else
+              E=br_inst_retired.near_taken:p
+            fi
         elif perf list ex_ret_brn_tkn | grep -q ex_ret_brn_tkn ; then
             E=ex_ret_brn_tkn:P$FLAGS
         elif $vendor = Intel ; then
-echo >&2 "Unknown Intel CPU. Run contrib/gen_autofdo_event.py --all --script to update script."
+echo >&2 "Unknown Intel CPU. Run gccsource/contrib/gen_autofdo_event.py --all --script to update script"
+echo >&2 "or update Linux perf version to version supporting this CPU."
 	  exit 1
         else
 echo >&2 "AMD CPU without support for ex_ret_brn_tkn event"
@@ -175,14 +198,14 @@ echo >&2 "AMD CPU without support for ex_ret_brn_tkn event"
         fi ;;''')
     print(r"esac")
     print(r"set -x")
-    print(r'if ! perf record -e $E -b "$@" ; then')
+    print(r'if ! perf record --inherit -o perf.data -e $E -b "$@" ; then')
     print(r'  # PEBS may not actually be working even if the processor supports it')
     print(r'  # (e.g., in a virtual machine). Trying to run without /p.')
     print(r'  set +x')
     print(r'  echo >&2 "Retrying without /p."')
     print(r'  E="$(echo "${E}" | sed -e \'s/\/p/\//\ -e s/:p//)"')
     print(r'  set -x')
-    print(r'  exec perf record -e $E -b "$@"')
+    print(r'  exec perf record --inherit -o perf.data -e $E -b "$@"')
     print(r' set +x')
     print(r'fi')
 
