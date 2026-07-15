@@ -49,12 +49,14 @@ backtrace_create_state (const char *filename, int flags,
 {
   int threaded;
   int moredata;
+  int offline;
   struct backtrace_state init_state;
   struct backtrace_state *state;
 
   threaded = (flags & 1) != 0;
   moredata = (flags & 2) != 0;
-  if ((flags & ~3) != 0)
+  offline = (flags & 4) != 0;
+  if ((flags & ~7) != 0)
     {
       error_callback (data, "backtrace_create_state: unsupported flag", 0);
       return NULL;
@@ -72,6 +74,7 @@ backtrace_create_state (const char *filename, int flags,
   init_state.filename = filename;
   init_state.threaded = threaded;
   init_state.moredata = moredata;
+  init_state.offline = offline;
 
   state = ((struct backtrace_state *)
 	   backtrace_alloc (&init_state, sizeof *state, error_callback, data));

@@ -145,6 +145,8 @@ struct backtrace_state
   int threaded;
   /* Non-zero if passing additional data.  */
   int moredata;
+  /* Non-zero if in offline mode for single binary only.  */
+  int offline;
   /* The master lock for fileline_fn, fileline_data, syminfo_fn,
      syminfo_data, fileline_initialization_failed and everything the
      data pointers point to.  */

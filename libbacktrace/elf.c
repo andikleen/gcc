@@ -231,6 +231,32 @@ typedef struct {
   b_elf_half	e_shstrndx;		/* Section header string table index */
 } b_elf_ehdr;  /* Elf_Ehdr.  */
 
+#if BACKTRACE_ELF_SIZE == 32
+typedef struct {
+  b_elf_word p_type;
+  b_elf_off p_offset;
+  b_elf_addr p_vaddr;
+  b_elf_addr p_paddr;
+  b_elf_wxword p_filesz;
+  b_elf_wxword p_memsz;
+  b_elf_word p_flags;
+  b_elf_wxword p_align;
+} b_elf_phdr;
+#else
+typedef struct {
+  b_elf_word p_type;
+  b_elf_word p_flags;
+  b_elf_off p_offset;
+  b_elf_addr p_vaddr;
+  b_elf_addr p_paddr;
+  b_elf_wxword p_filesz;
+  b_elf_wxword p_memsz;
+  b_elf_wxword p_align;
+} b_elf_phdr;
+#endif
+
+#define PT_LOAD 1
+
 #define EI_MAG0 0
 #define EI_MAG1 1
 #define EI_MAG2 2
@@ -456,6 +482,67 @@ elf_release_view (struct backtrace_state *state, struct elf_view *view,
 {
   if (view->release)
     backtrace_release_view (state, &view->view, error_callback, data);
+}
+
+/* Find the lowest loadable virtual address in an ELF image.  Offline
+   addresses are normalized relative to this image base, including for
+   ET_EXEC files whose link-time addresses are normally nonzero.  */
+static int
+elf_get_image_base (struct backtrace_state *state, int descriptor,
+		    const unsigned char *memory, size_t memory_size,
+		    const b_elf_ehdr *ehdr,
+		    backtrace_error_callback error_callback, void *data,
+		    uintptr_t *image_base)
+{
+  struct elf_view phdrs_view;
+  uint64_t phdrs_size;
+  b_elf_addr min_vaddr = ~(b_elf_addr) 0;
+  b_elf_wxword max_align = 1;
+  unsigned int i;
+
+  if (ehdr->e_phnum == 0
+      || ehdr->e_phentsize < sizeof (b_elf_phdr))
+    {
+      error_callback (data, "ELF has no usable program headers", 0);
+      return 0;
+    }
+
+  phdrs_size = (uint64_t) ehdr->e_phnum * ehdr->e_phentsize;
+  if (phdrs_size / ehdr->e_phentsize != ehdr->e_phnum
+      || !elf_get_view (state, descriptor, memory, memory_size,
+			ehdr->e_phoff, phdrs_size, error_callback, data,
+			&phdrs_view))
+    return 0;
+
+  for (i = 0; i < ehdr->e_phnum; ++i)
+    {
+      b_elf_phdr phdr;
+
+      memcpy (&phdr,
+	      (const unsigned char *) phdrs_view.view.data
+	      + (size_t) i * ehdr->e_phentsize,
+	      sizeof phdr);
+      if (phdr.p_type == PT_LOAD)
+	{
+	  if (phdr.p_vaddr < min_vaddr)
+	    min_vaddr = phdr.p_vaddr;
+	  if (phdr.p_align > max_align)
+	    max_align = phdr.p_align;
+	}
+    }
+
+  elf_release_view (state, &phdrs_view, error_callback, data);
+
+  if (min_vaddr == ~(b_elf_addr) 0)
+    {
+      error_callback (data, "ELF has no loadable segments", 0);
+      return 0;
+    }
+
+  if ((max_align & (max_align - 1)) != 0)
+    max_align = 1;
+  *image_base = (uintptr_t) (min_vaddr & ~(max_align - 1));
+  return 1;
 }
 
 /* Compute the CRC-32 of BUF/LEN.  This uses the CRC used for
@@ -6639,6 +6726,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
   struct elf_ppc64_opd_data opd_data, *opd;
   int opd_view_valid;
   struct dwarf_sections dwarf_sections;
+  uintptr_t image_base;
 
   if (!debuginfo)
     {
@@ -6707,10 +6795,19 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
       error_callback (data, "executable file has unknown endianness", 0);
       goto fail;
     }
+  if (state->offline && !debuginfo && memory == NULL
+      && !libbacktrace_using_fdpic ())
+    {
+      if (!elf_get_image_base (state, descriptor, memory, memory_size,
+			       &ehdr, error_callback, data, &image_base))
+	goto fail;
+      base_address.m -= image_base;
+    }
 
   /* If the executable is ET_DYN, it is either a PIE, or we are running
      directly a shared library with .interp.  We need to wait for
-     dl_iterate_phdr in that case to determine the actual base_address.  */
+     dl_iterate_phdr in that case to determine the actual base_address.
+     Offline states instead use the normalized image base above.  */
   if (exe && ehdr.e_type == ET_DYN)
     return -1;
 
@@ -7500,21 +7597,24 @@ backtrace_initialize (struct backtrace_state *state, const char *filename,
       memset (&zero_base_address, 0, sizeof zero_base_address);
       ret = elf_add (state, filename, descriptor, NULL, 0, zero_base_address,
 		     NULL, error_callback, data, &elf_fileline_fn, &found_sym,
-		     &found_dwarf, NULL, 1, 0, NULL, 0);
+		     &found_dwarf, NULL, state->offline ? 0 : 1, 0, NULL, 0);
       if (!ret)
 	return 0;
     }
 
-  pd.state = state;
-  pd.error_callback = error_callback;
-  pd.data = data;
-  pd.fileline_fn = &elf_fileline_fn;
-  pd.found_sym = &found_sym;
-  pd.found_dwarf = &found_dwarf;
-  pd.exe_filename = filename;
-  pd.exe_descriptor = ret < 0 ? descriptor : -1;
+  if (!state->offline)
+    {
+      pd.state = state;
+      pd.error_callback = error_callback;
+      pd.data = data;
+      pd.fileline_fn = &elf_fileline_fn;
+      pd.found_sym = &found_sym;
+      pd.found_dwarf = &found_dwarf;
+      pd.exe_filename = filename;
+      pd.exe_descriptor = ret < 0 ? descriptor : -1;
 
-  dl_iterate_phdr (phdr_callback, (void *) &pd);
+      dl_iterate_phdr (phdr_callback, (void *) &pd);
+    }
 
   if (!state->threaded)
     {

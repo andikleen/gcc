@@ -94,6 +94,7 @@ typedef void (*backtrace_error_callback) (void *data, const char *msg,
    FLAGS passes flags as bits in an int value:
    1: THREADED
    2: MOREDATA
+   4: OFFLINE
 
    If (FLAGS & 1) != 0 the THREADED flag is set.  If this flag is set,
    the state may be accessed by multiple threads simultaneously, and the
@@ -106,6 +107,12 @@ typedef void (*backtrace_error_callback) (void *data, const char *msg,
    instead pass it as a pointer to a backtrace_moredata struct.  This is
    a backward compatible approach to getting more data from the various
    backtrace functions.
+
+   if (FLAGS & 4) != 0 the OFFLINE flag is set.  Don't assume the binary
+   passed as FILENAME is for the current process. pcinfo and syminfo use
+   addresses relative to the lowest page-aligned PT_LOAD virtual address
+   in the ELF file. Shared libraries require opening each shared library
+   individually.
 
    Historical note: in previous versions (before July, 2026) the FLAGS
    argument was named THREADED, and passing non-zero for THREADED was
@@ -194,7 +201,9 @@ extern void backtrace_print (struct backtrace_state *state, int skip, FILE *);
    the debugging information contains the necessary information, then
    this may call the callback function multiple times.  This will make
    at least one call to either CALLBACK or ERROR_CALLBACK.  This
-   returns the first non-zero value returned by CALLBACK, or 0.  */
+   returns the first non-zero value returned by CALLBACK, or 0.
+   When the state has been opened in OFFLINE mode PC must be relative to
+   the lowest page-aligned PT_LOAD virtual address in the ELF file.  */
 
 extern int backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
 			     backtrace_full_callback callback,
@@ -223,7 +232,9 @@ typedef void (*backtrace_syminfo_callback) (void *data, uintptr_t pc,
    the symbol table but does not require the debug info.  Note that if
    the symbol table is present but ADDR could not be found in the
    table, CALLBACK will be called with a NULL SYMNAME argument.
-   Returns 1 on success, 0 on error.  */
+   Returns 1 on success, 0 on error. When STATE was created with OFFLINE,
+   ADDR must be relative to the lowest page-aligned PT_LOAD virtual address
+   in the ELF file.  */
 
 extern int backtrace_syminfo (struct backtrace_state *state, uintptr_t addr,
 			      backtrace_syminfo_callback callback,
