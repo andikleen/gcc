@@ -395,12 +395,18 @@ extern void backtrace_syminfo_to_full_callback (void *data, uintptr_t pc,
 						const char *symname,
 						uintptr_t symval,
 						uintptr_t symsize);
+extern void backtrace_syminfo_to_full_callback_moredata (void *data, uintptr_t pc,
+							 const char *symname,
+							 uintptr_t symval,
+							 uintptr_t symsize);
 
 /* An error callback that corresponds to
    backtrace_syminfo_to_full_callback.  */
 
 extern void backtrace_syminfo_to_full_error_callback (void *, const char *,
 						      int);
+extern void backtrace_syminfo_to_full_error_callback_moredata (void *, const char *,
+								 int);
 
 /* A test-only hook for elf_uncompress_zdebug.  */
 
